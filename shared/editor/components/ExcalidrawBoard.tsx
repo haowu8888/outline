@@ -2,7 +2,7 @@ import { EditIcon, ShapesIcon } from "outline-icons";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import { s } from "../../styles";
 import { svgToDataUrl } from "../lib/excalidraw";
 import { ComponentProps } from "../types";
@@ -18,20 +18,23 @@ type Props = ComponentProps & {
  * Renders the preview of a drawing and opens the full screen editor.
  */
 export default function ExcalidrawBoard(props: Props) {
-  const { node, isEditable, isSelected, theme, onSave } = props;
+  const { node, isEditable, isSelected, onSave } = props;
+  const theme = useTheme();
   const { data, svg } = node.attrs as { data: string; svg: string };
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [renderedSvg, setRenderedSvg] = React.useState("");
   const preview = svg || renderedSvg;
 
-  // A drawing inserted from the menu opens the editor right away.
+  // An empty drawing, such as one just inserted from the menu, opens the
+  // editor as soon as it is selected.
+  const autoOpened = React.useRef(false);
   React.useEffect(() => {
-    if (isEditable && isSelected && !data) {
+    if (isEditable && isSelected && !data && !autoOpened.current) {
+      autoOpened.current = true;
       setOpen(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditable, isSelected, data]);
 
   // Drawings imported from Markdown have no stored preview yet.
   React.useEffect(() => {
@@ -99,7 +102,7 @@ export default function ExcalidrawBoard(props: Props) {
           <React.Suspense fallback={<Loading>{t("Loading")}…</Loading>}>
             <ExcalidrawEditor
               data={data}
-              isDark={theme.isDark}
+              isDark={!!theme?.isDark}
               onSave={handleSave}
               onClose={() => setOpen(false)}
             />
