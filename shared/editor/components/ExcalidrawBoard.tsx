@@ -18,11 +18,23 @@ type Props = ComponentProps & {
  * Renders the preview of a drawing and opens the full screen editor.
  */
 export default function ExcalidrawBoard(props: Props) {
-  const { node, isEditable, isSelected, onSave } = props;
+  const { node, view, isEditable, isSelected, onSave } = props;
   const theme = useTheme();
   const { data, svg } = node.attrs as { data: string; svg: string };
   const { t } = useTranslation();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpenState] = React.useState(false);
+
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      if (value) {
+        // Move focus out of the document, otherwise typing in the drawing
+        // editor would replace the selected drawing node.
+        (view.dom as HTMLElement).blur();
+      }
+      setOpenState(value);
+    },
+    [view]
+  );
   const [renderedSvg, setRenderedSvg] = React.useState("");
   const preview = svg || renderedSvg;
 
@@ -34,7 +46,7 @@ export default function ExcalidrawBoard(props: Props) {
       autoOpened.current = true;
       setOpen(true);
     }
-  }, [isEditable, isSelected, data]);
+  }, [isEditable, isSelected, data, setOpen]);
 
   // Drawings imported from Markdown have no stored preview yet.
   React.useEffect(() => {
@@ -64,7 +76,7 @@ export default function ExcalidrawBoard(props: Props) {
       event.stopPropagation();
       setOpen(true);
     },
-    [isEditable]
+    [isEditable, setOpen]
   );
 
   const handleSave = React.useCallback(
@@ -72,7 +84,7 @@ export default function ExcalidrawBoard(props: Props) {
       onSave(nextData, nextSvg);
       setOpen(false);
     },
-    [onSave]
+    [onSave, setOpen]
   );
 
   return (

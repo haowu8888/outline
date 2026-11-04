@@ -149,8 +149,18 @@ export default function ExcalidrawEditor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSave]);
 
+  // Keep key presses inside the drawing editor away from the document.
+  const stopPropagation = React.useCallback(
+    (event: React.KeyboardEvent) => event.stopPropagation(),
+    []
+  );
+
   return (
-    <Overlay role="dialog" aria-label={t("Edit drawing")}>
+    <Overlay
+      role="dialog"
+      aria-label={t("Edit drawing")}
+      onKeyDown={stopPropagation}
+    >
       <Toolbar>
         <Title>{t("Edit drawing")}</Title>
         <Actions>
@@ -173,6 +183,7 @@ export default function ExcalidrawEditor({
           excalidrawAPI={(instance) => {
             api.current = instance as unknown as ExcalidrawApi;
           }}
+          autoFocus
           theme={isDark ? "dark" : "light"}
           langCode={i18n.language?.startsWith("zh") ? "zh-CN" : "en"}
           UIOptions={{
