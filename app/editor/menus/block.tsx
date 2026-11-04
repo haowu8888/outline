@@ -23,6 +23,10 @@ import {
   EmbedIcon,
   SparklesIcon,
   ShapesIcon,
+  TableHeaderColumnIcon,
+  CameraIcon,
+  ThumbsUpIcon,
+  PadlockIcon,
 } from "outline-icons";
 import * as React from "react";
 import styled from "styled-components";
@@ -225,6 +229,63 @@ export default function blockMenuItems(
       icon: <ShapesIcon />,
       keywords:
         "excalidraw drawing whiteboard sketch draw hb huaban 画板 白板 绘图",
+    },
+    {
+      name: "columns",
+      title: dictionary.columns2,
+      icon: <TableHeaderColumnIcon />,
+      keywords: "columns layout split fenlan 分栏 两栏 双栏",
+      attrs: { count: 2 },
+    },
+    {
+      name: "columns",
+      title: dictionary.columns3,
+      icon: <TableHeaderColumnIcon />,
+      keywords: "columns layout split fenlan 分栏 三栏",
+      attrs: { count: 3 },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.kanban,
+      icon: <TodoListIcon />,
+      keywords: "kanban board tasks kb kanban 看板 任务",
+      attrs: { kind: "kanban" },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.gallery,
+      icon: <CameraIcon />,
+      keywords:
+        "gallery album images photos carousel huace 画册 相册 图册 轮播",
+      attrs: { kind: "gallery" },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.calendar,
+      icon: <CalendarIcon />,
+      keywords: "calendar schedule events rili 日历 日程",
+      attrs: { kind: "calendar" },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.poll,
+      icon: <ThumbsUpIcon />,
+      keywords: "poll vote survey toupiao 投票 表决",
+      attrs: { kind: "poll" },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.checkin,
+      icon: <DoneIcon />,
+      keywords: "checkin habit streak daka 打卡 签到",
+      attrs: { kind: "checkin" },
+    },
+    {
+      name: "smart_block",
+      title: dictionary.encrypted,
+      icon: <PadlockIcon />,
+      keywords: "encrypted secret password jiami 加密 密码 私密",
+      attrs: { kind: "encrypted" },
     },
     {
       name: "code_block",

@@ -2,6 +2,7 @@ import { Node as ProsemirrorNode } from "prosemirror-model";
 import { EditorView, Decoration } from "prosemirror-view";
 import { FunctionComponent } from "react";
 import Extension from "@shared/editor/lib/Extension";
+import { BLOCK_DRAG_TYPE } from "@shared/editor/lib/smartBlocks";
 import { ComponentProps } from "@shared/editor/types";
 import { Editor } from "~/editor";
 import { NodeViewRenderer } from "./NodeViewRenderer";
@@ -98,6 +99,26 @@ export default class ComponentView {
   }
 
   stopEvent(event: Event) {
+    const target = event.target as HTMLElement | null;
+    // Components marked with data-pm-stop-event contain their own controls,
+    // let them handle input and their own drag and drop.
+    if (target?.closest?.("[data-pm-stop-event]")) {
+      if (event.type.startsWith("drag") || event.type === "drop") {
+        const types = Array.from(
+          (event as DragEvent).dataTransfer?.types ?? []
+        );
+        if (
+          target.closest("[data-pm-stop-event] [draggable=true]") ||
+          types.some((type) => type.startsWith(BLOCK_DRAG_TYPE))
+        ) {
+          return true;
+        }
+      } else if (
+        target.closest("input, textarea, select, button, label, a, form")
+      ) {
+        return true;
+      }
+    }
     return event.type !== "mousedown" && !event.type.startsWith("drag");
   }
 

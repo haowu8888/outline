@@ -21,10 +21,11 @@ import CheckboxItem from "./CheckboxItem";
 import CheckboxList from "./CheckboxList";
 import CodeBlock from "./CodeBlock";
 import CodeFence from "./CodeFence";
+import Columns, { Column } from "./Columns";
 import Doc from "./Doc";
 import Embed from "./Embed";
-import Excalidraw from "./Excalidraw";
 import Emoji from "./Emoji";
+import Excalidraw from "./Excalidraw";
 import HardBreak from "./HardBreak";
 import Heading from "./Heading";
 import HorizontalRule from "./HorizontalRule";
@@ -38,6 +39,7 @@ import Notice from "./Notice";
 import OrderedList from "./OrderedList";
 import Paragraph from "./Paragraph";
 import SimpleImage from "./SimpleImage";
+import SmartBlock from "./SmartBlock";
 import Table from "./Table";
 import TableCell from "./TableCell";
 import TableHeader from "./TableHeader";
@@ -100,6 +102,7 @@ export const richExtensions: Nodes = [
   Blockquote,
   Embed,
   Excalidraw,
+  SmartBlock,
   Attachment,
   Video,
   Notice,
@@ -114,6 +117,8 @@ export const richExtensions: Nodes = [
   // the container nodes first.
   ...listExtensions,
   ...tableExtensions,
+  Column,
+  Columns,
 ];
 
 /**

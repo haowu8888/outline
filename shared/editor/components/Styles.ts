@@ -941,6 +941,69 @@ h6 {
   }
 }
 
+.columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 8px 0;
+
+  @media (max-width: 600px) {
+    grid-auto-flow: row;
+  }
+}
+
+.column {
+  min-width: 0;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px dashed transparent;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.ProseMirror[contenteditable="true"] .columns-active > .column,
+.ProseMirror[contenteditable="true"] .columns:hover > .column {
+  border-color: ${props.theme.divider};
+}
+
+.columns-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 0;
+  top: -22px;
+  user-select: none;
+
+  button {
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid ${props.theme.divider};
+    border-radius: 4px;
+    background: ${props.theme.background};
+    color: ${props.theme.textSecondary};
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) {
+    color: ${props.theme.text};
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
 .notice-block {
   display: flex;
   align-items: center;
