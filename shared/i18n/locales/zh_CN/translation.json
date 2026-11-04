@@ -1178,5 +1178,20 @@
   "AI writing failed": "AI 写作失败",
   "Try again": "重试",
   "Replace selection": "替换选中内容",
-  "Insert below": "插入到下方"
+  "Insert below": "插入到下方",
+  "Connection successful": "连接成功",
+  "Connection failed": "连接失败",
+  "Connect an OpenAI-compatible API to enable AI writing in the editor. Changes take effect immediately without a restart.": "接入 OpenAI 兼容接口以在编辑器中使用 AI 写作。修改后立即生效，无需重启。",
+  "Enable AI writing": "启用 AI 写作",
+  "Show AI writing actions in the editor toolbar and block menu": "在编辑器工具栏和 / 菜单中显示 AI 写作",
+  "API base URL": "接口地址",
+  "Including the version path, for example https://api.openai.com/v1": "需包含版本路径，例如 https://api.openai.com/v1",
+  "Model": "模型",
+  "Leave empty to use {{ model }}": "留空则使用 {{ model }}",
+  "API key": "API 密钥",
+  "A key is saved. Leave empty to keep it.": "已保存密钥，留空则保持不变。",
+  "Stored encrypted and never shown again.": "加密保存，保存后不再显示。",
+  "Testing": "正在测试",
+  "Test connection": "测试连接",
+  "Remove key": "删除密钥"
 }

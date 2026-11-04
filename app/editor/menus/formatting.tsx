@@ -31,8 +31,8 @@ import { isNodeActive } from "@shared/editor/queries/isNodeActive";
 import { MenuItem } from "@shared/editor/types";
 import { metaDisplay } from "@shared/utils/keyboard";
 import CircleIcon from "~/components/Icons/CircleIcon";
-import env from "~/env";
 import { Dictionary } from "~/hooks/useDictionary";
+import AIConfig from "~/utils/AIConfig";
 
 export default function formattingMenuItems(
   state: EditorState,
@@ -252,12 +252,12 @@ export default function formattingMenuItems(
     },
     {
       name: "separator",
-      visible: !!env.AI_WRITING_ENABLED && !isCode && !isEmpty,
+      visible: AIConfig.enabled && !isCode && !isEmpty,
     },
     {
       tooltip: dictionary.aiWriting,
       icon: <SparklesIcon />,
-      visible: !!env.AI_WRITING_ENABLED && !isCode && !isEmpty,
+      visible: AIConfig.enabled && !isCode && !isEmpty,
       children: [
         {
           name: "aiWrite",

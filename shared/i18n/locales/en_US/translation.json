@@ -1190,5 +1190,20 @@
   "AI writing failed": "AI writing failed",
   "Try again": "Try again",
   "Replace selection": "Replace selection",
-  "Insert below": "Insert below"
+  "Insert below": "Insert below",
+  "Connection successful": "Connection successful",
+  "Connection failed": "Connection failed",
+  "Connect an OpenAI-compatible API to enable AI writing in the editor. Changes take effect immediately without a restart.": "Connect an OpenAI-compatible API to enable AI writing in the editor. Changes take effect immediately without a restart.",
+  "Enable AI writing": "Enable AI writing",
+  "Show AI writing actions in the editor toolbar and block menu": "Show AI writing actions in the editor toolbar and block menu",
+  "API base URL": "API base URL",
+  "Including the version path, for example https://api.openai.com/v1": "Including the version path, for example https://api.openai.com/v1",
+  "Model": "Model",
+  "Leave empty to use {{ model }}": "Leave empty to use {{ model }}",
+  "API key": "API key",
+  "A key is saved. Leave empty to keep it.": "A key is saved. Leave empty to keep it.",
+  "Stored encrypted and never shown again.": "Stored encrypted and never shown again.",
+  "Testing": "Testing",
+  "Test connection": "Test connection",
+  "Remove key": "Remove key"
 }

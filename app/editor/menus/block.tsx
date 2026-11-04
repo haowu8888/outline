@@ -28,8 +28,8 @@ import styled from "styled-components";
 import Image from "@shared/editor/components/Img";
 import { MenuItem } from "@shared/editor/types";
 import { metaDisplay } from "@shared/utils/keyboard";
-import env from "~/env";
 import { Dictionary } from "~/hooks/useDictionary";
+import AIConfig from "~/utils/AIConfig";
 
 const Img = styled(Image)`
   border-radius: 2px;
@@ -227,7 +227,7 @@ export default function blockMenuItems(
     },
     {
       name: "separator",
-      visible: !!env.AI_WRITING_ENABLED,
+      visible: AIConfig.enabled,
     },
     {
       name: "aiWrite",
@@ -235,7 +235,7 @@ export default function blockMenuItems(
       icon: <SparklesIcon />,
       keywords: "ai gpt continue write xuxie 续写 写作",
       attrs: { action: "continue" },
-      visible: !!env.AI_WRITING_ENABLED,
+      visible: AIConfig.enabled,
     },
     {
       name: "aiWrite",
@@ -243,7 +243,7 @@ export default function blockMenuItems(
       icon: <SparklesIcon />,
       keywords: "ai gpt ask prompt 写作 问",
       attrs: { action: "custom" },
-      visible: !!env.AI_WRITING_ENABLED,
+      visible: AIConfig.enabled,
     },
   ];
 }

@@ -1,9 +1,12 @@
 import { IsOptional, IsUrl } from "class-validator";
 import { Environment } from "@server/env";
-import { Public } from "@server/utils/decorators/Public";
 import environment from "@server/utils/environment";
 import { CannotUseWithout } from "@server/utils/validators";
 
+/**
+ * Optional defaults for AI writing. Settings saved by an admin in the app take
+ * precedence and do not require a restart.
+ */
 class AIPluginEnvironment extends Environment {
   /**
    * Base url of an OpenAI-compatible API, including the version path,
@@ -25,12 +28,6 @@ class AIPluginEnvironment extends Environment {
 
   /** The chat model used for writing assistance. */
   public AI_MODEL = environment.AI_MODEL || "gpt-4o-mini";
-
-  /** Whether AI writing is available, exposed to the client. */
-  @Public
-  public AI_WRITING_ENABLED = !!(
-    environment.AI_BASE_URL && environment.AI_API_KEY
-  );
 }
 
 export default new AIPluginEnvironment();

@@ -4,7 +4,7 @@ import { Command, EditorState } from "prosemirror-state";
 import * as React from "react";
 import Extension, { WidgetProps } from "@shared/editor/lib/Extension";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
-import env from "~/env";
+import AIConfig from "~/utils/AIConfig";
 import AIWritingPanel from "../components/AIWritingPanel";
 
 export type AIWritingAction =
@@ -46,7 +46,7 @@ export default class AIWritingExtension extends Extension {
       aiWrite:
         (attrs: { action: AIWritingAction }): Command =>
         (state) => {
-          if (!env.AI_WRITING_ENABLED) {
+          if (!AIConfig.enabled) {
             return false;
           }
           this.start(attrs.action, state);
@@ -55,7 +55,15 @@ export default class AIWritingExtension extends Extension {
     };
   }
 
-  widget = ({ readOnly }: WidgetProps) => (
+  widget = ({ readOnly }: WidgetProps) => {
+    if (!readOnly) {
+      // Only editors need to know whether AI writing is available.
+      void AIConfig.load();
+    }
+    return this.renderPanel(readOnly);
+  };
+
+  private renderPanel = (readOnly: boolean | undefined) => (
     <AIWritingPanel
       open={this.open && !readOnly}
       action={this.action}

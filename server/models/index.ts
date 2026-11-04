@@ -1,3 +1,5 @@
+export { default as AISetting } from "./AISetting";
+
 export { default as ApiKey } from "./ApiKey";
 
 export { default as Attachment } from "./Attachment";
