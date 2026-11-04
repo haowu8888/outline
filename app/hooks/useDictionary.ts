@@ -100,6 +100,16 @@ export default function useDictionary() {
       video: t("Video"),
       untitled: t("Untitled"),
       none: t("None"),
+      aiWriting: t("AI writing"),
+      aiContinue: t("Continue writing"),
+      aiPolish: t("Polish"),
+      aiExpand: t("Expand"),
+      aiShorten: t("Make shorter"),
+      aiSummarize: t("Summarize"),
+      aiTranslateEn: t("Translate to English"),
+      aiTranslateZh: t("Translate to Chinese"),
+      aiFix: t("Fix spelling & grammar"),
+      aiAsk: t("Ask AI"),
     }),
     [t]
   );

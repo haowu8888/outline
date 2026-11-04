@@ -1162,5 +1162,21 @@
   "Password": "密码",
   "View document": "查看文档",
   "This share link has expired": "此分享链接已过期",
-  "Ask the owner of the document for a new link.": "请联系文档所有者获取新的链接。"
+  "Ask the owner of the document for a new link.": "请联系文档所有者获取新的链接。",
+  "AI writing": "AI 写作",
+  "Continue writing": "续写",
+  "Polish": "润色",
+  "Make shorter": "缩写",
+  "Summarize": "总结要点",
+  "Translate to English": "翻译成英文",
+  "Translate to Chinese": "翻译成中文",
+  "Fix spelling & grammar": "修正错别字和语法",
+  "Ask AI": "让 AI 写…",
+  "Tell AI what to write or change…": "告诉 AI 要写什么或怎么改…",
+  "Generate": "生成",
+  "Writing…": "正在写作…",
+  "AI writing failed": "AI 写作失败",
+  "Try again": "重试",
+  "Replace selection": "替换选中内容",
+  "Insert below": "插入到下方"
 }

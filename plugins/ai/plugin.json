@@ -1,0 +1,6 @@
+{
+  "id": "ai",
+  "name": "AI writing",
+  "priority": 0,
+  "description": "Adds AI writing assistance to the editor using an OpenAI-compatible API."
+}

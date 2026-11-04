@@ -17,6 +17,7 @@ import {
   IndentIcon,
   CopyIcon,
   Heading3Icon,
+  SparklesIcon,
 } from "outline-icons";
 import { EditorState } from "prosemirror-state";
 import * as React from "react";
@@ -30,6 +31,7 @@ import { isNodeActive } from "@shared/editor/queries/isNodeActive";
 import { MenuItem } from "@shared/editor/types";
 import { metaDisplay } from "@shared/utils/keyboard";
 import CircleIcon from "~/components/Icons/CircleIcon";
+import env from "~/env";
 import { Dictionary } from "~/hooks/useDictionary";
 
 export default function formattingMenuItems(
@@ -247,6 +249,60 @@ export default function formattingMenuItems(
         { exact: true }
       ),
       visible: !isMobile || !isEmpty,
+    },
+    {
+      name: "separator",
+      visible: !!env.AI_WRITING_ENABLED && !isCode && !isEmpty,
+    },
+    {
+      tooltip: dictionary.aiWriting,
+      icon: <SparklesIcon />,
+      visible: !!env.AI_WRITING_ENABLED && !isCode && !isEmpty,
+      children: [
+        {
+          name: "aiWrite",
+          label: dictionary.aiPolish,
+          attrs: { action: "polish" },
+        },
+        { name: "aiWrite", label: dictionary.aiFix, attrs: { action: "fix" } },
+        {
+          name: "aiWrite",
+          label: dictionary.aiExpand,
+          attrs: { action: "expand" },
+        },
+        {
+          name: "aiWrite",
+          label: dictionary.aiShorten,
+          attrs: { action: "shorten" },
+        },
+        {
+          name: "aiWrite",
+          label: dictionary.aiSummarize,
+          attrs: { action: "summarize" },
+        },
+        {
+          name: "aiWrite",
+          label: dictionary.aiContinue,
+          attrs: { action: "continue" },
+        },
+        { name: "separator" },
+        {
+          name: "aiWrite",
+          label: dictionary.aiTranslateEn,
+          attrs: { action: "translate_en" },
+        },
+        {
+          name: "aiWrite",
+          label: dictionary.aiTranslateZh,
+          attrs: { action: "translate_zh" },
+        },
+        { name: "separator" },
+        {
+          name: "aiWrite",
+          label: dictionary.aiAsk,
+          attrs: { action: "custom" },
+        },
+      ],
     },
     {
       name: "separator",

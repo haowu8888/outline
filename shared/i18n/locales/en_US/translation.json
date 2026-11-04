@@ -1174,5 +1174,21 @@
   "Password": "Password",
   "View document": "View document",
   "This share link has expired": "This share link has expired",
-  "Ask the owner of the document for a new link.": "Ask the owner of the document for a new link."
+  "Ask the owner of the document for a new link.": "Ask the owner of the document for a new link.",
+  "AI writing": "AI writing",
+  "Continue writing": "Continue writing",
+  "Polish": "Polish",
+  "Make shorter": "Make shorter",
+  "Summarize": "Summarize",
+  "Translate to English": "Translate to English",
+  "Translate to Chinese": "Translate to Chinese",
+  "Fix spelling & grammar": "Fix spelling & grammar",
+  "Ask AI": "Ask AI",
+  "Tell AI what to write or change…": "Tell AI what to write or change…",
+  "Generate": "Generate",
+  "Writing…": "Writing…",
+  "AI writing failed": "AI writing failed",
+  "Try again": "Try again",
+  "Replace selection": "Replace selection",
+  "Insert below": "Insert below"
 }

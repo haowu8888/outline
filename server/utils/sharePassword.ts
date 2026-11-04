@@ -23,7 +23,10 @@ export function hashSharePassword(password: string): string {
  * @param encoded The stored hash.
  * @returns True if the password matches.
  */
-export function verifySharePassword(password: string, encoded: string): boolean {
+export function verifySharePassword(
+  password: string,
+  encoded: string
+): boolean {
   const [scheme, salt, hash] = encoded.split("$");
   if (scheme !== "scrypt" || !salt || !hash) {
     return false;
@@ -80,6 +83,7 @@ export function verifyShareUnlockToken(
   const expected = Buffer.from(sign(shareId, passwordHash, expiresAt));
   const actual = Buffer.from(signature);
   return (
-    expected.length === actual.length && crypto.timingSafeEqual(expected, actual)
+    expected.length === actual.length &&
+    crypto.timingSafeEqual(expected, actual)
   );
 }

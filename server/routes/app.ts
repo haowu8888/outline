@@ -8,13 +8,13 @@ import isUUID from "validator/lib/isUUID";
 import { IntegrationType, TeamPreference } from "@shared/types";
 import { unicodeCLDRtoISO639 } from "@shared/utils/date";
 import documentLoader from "@server/commands/documentLoader";
-import { shareUnlockCookieName } from "@server/utils/sharePassword";
 import env from "@server/env";
 import { Integration } from "@server/models";
 import presentEnv from "@server/presenters/env";
 import { getTeamFromContext } from "@server/utils/passport";
 import prefetchTags from "@server/utils/prefetchTags";
 import readManifestFile from "@server/utils/readManifestFile";
+import { shareUnlockCookieName } from "@server/utils/sharePassword";
 
 const readFile = util.promisify(fs.readFile);
 const entry = "app/index.tsx";

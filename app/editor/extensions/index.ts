@@ -1,6 +1,7 @@
 import Extension from "@shared/editor/lib/Extension";
 import Mark from "@shared/editor/marks/Mark";
 import Node from "@shared/editor/nodes/Node";
+import AIWritingExtension from "~/editor/extensions/AIWriting";
 import BlockMenuExtension from "~/editor/extensions/BlockMenu";
 import ClipboardTextSerializer from "~/editor/extensions/ClipboardTextSerializer";
 import EmojiMenuExtension from "~/editor/extensions/EmojiMenu";
@@ -24,6 +25,7 @@ export const withUIExtensions = (nodes: Nodes) => [
   MentionMenuExtension,
   FindAndReplaceExtension,
   HoverPreviewsExtension,
+  AIWritingExtension,
   // Order these default key handlers last
   PreventTab,
   Keys,

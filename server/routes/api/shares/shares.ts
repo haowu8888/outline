@@ -12,8 +12,8 @@ import { Document, User, Share, Team, Collection } from "@server/models";
 import { authorize } from "@server/policies";
 import { presentShare, presentPolicies } from "@server/presenters";
 import { APIContext } from "@server/types";
-import { getTeamFromContext } from "@server/utils/passport";
 import { RateLimiterStrategy } from "@server/utils/RateLimiter";
+import { getTeamFromContext } from "@server/utils/passport";
 import {
   createShareUnlockToken,
   hashSharePassword,

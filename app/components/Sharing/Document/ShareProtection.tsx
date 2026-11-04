@@ -71,11 +71,12 @@ function ShareProtection({ share }: Props) {
       if (!value || value === "current") {
         return;
       }
-      const expiresAt =
-        value === "never"
-          ? null
-          : new Date(Date.now() + Number(value) * DAY).toISOString();
-      return update({ expiresAt });
+      return update({
+        expiresAt:
+          value === "never"
+            ? null
+            : new Date(Date.now() + Number(value) * DAY).toISOString(),
+      });
     },
     [update]
   );

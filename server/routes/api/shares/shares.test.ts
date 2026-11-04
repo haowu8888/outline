@@ -1111,7 +1111,9 @@ describe("share password and expiry", () => {
     return { admin, document, share };
   }
 
-  function unlockCookie(res: { headers: { get(name: string): string | null } }) {
+  function unlockCookie(res: {
+    headers: { get(name: string): string | null };
+  }) {
     const header = res.headers.get("set-cookie") ?? "";
     const match = header.match(/(shareUnlock-[^=]+=[^;]+)/);
     return match ? match[1] : undefined;

@@ -21,12 +21,14 @@ import {
   MathIcon,
   DoneIcon,
   EmbedIcon,
+  SparklesIcon,
 } from "outline-icons";
 import * as React from "react";
 import styled from "styled-components";
 import Image from "@shared/editor/components/Img";
 import { MenuItem } from "@shared/editor/types";
 import { metaDisplay } from "@shared/utils/keyboard";
+import env from "~/env";
 import { Dictionary } from "~/hooks/useDictionary";
 
 const Img = styled(Image)`
@@ -222,6 +224,26 @@ export default function blockMenuItems(
       icon: <Img src="/images/mermaidjs.png" alt="Mermaid Diagram" />,
       keywords: "diagram flowchart",
       attrs: { language: "mermaidjs" },
+    },
+    {
+      name: "separator",
+      visible: !!env.AI_WRITING_ENABLED,
+    },
+    {
+      name: "aiWrite",
+      title: dictionary.aiContinue,
+      icon: <SparklesIcon />,
+      keywords: "ai gpt continue write xuxie 续写 写作",
+      attrs: { action: "continue" },
+      visible: !!env.AI_WRITING_ENABLED,
+    },
+    {
+      name: "aiWrite",
+      title: dictionary.aiAsk,
+      icon: <SparklesIcon />,
+      keywords: "ai gpt ask prompt 写作 问",
+      attrs: { action: "custom" },
+      visible: !!env.AI_WRITING_ENABLED,
     },
   ];
 }
