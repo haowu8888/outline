@@ -22,6 +22,7 @@ import {
   DoneIcon,
   EmbedIcon,
   SparklesIcon,
+  ShapesIcon,
 } from "outline-icons";
 import * as React from "react";
 import styled from "styled-components";
@@ -217,6 +218,13 @@ export default function blockMenuItems(
     },
     {
       name: "separator",
+    },
+    {
+      name: "excalidraw",
+      title: dictionary.excalidraw,
+      icon: <ShapesIcon />,
+      keywords:
+        "excalidraw drawing whiteboard sketch draw hb huaban 画板 白板 绘图",
     },
     {
       name: "code_block",

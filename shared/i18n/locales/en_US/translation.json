@@ -1205,5 +1205,9 @@
   "Stored encrypted and never shown again.": "Stored encrypted and never shown again.",
   "Testing": "Testing",
   "Test connection": "Test connection",
-  "Remove key": "Remove key"
+  "Remove key": "Remove key",
+  "Drawing": "Drawing",
+  "Empty drawing, click edit to start": "Empty drawing, click edit to start",
+  "Edit drawing": "Edit drawing",
+  "The drawing is too large to save": "The drawing is too large to save"
 }

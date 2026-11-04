@@ -1193,5 +1193,9 @@
   "Stored encrypted and never shown again.": "加密保存，保存后不再显示。",
   "Testing": "正在测试",
   "Test connection": "测试连接",
-  "Remove key": "删除密钥"
+  "Remove key": "删除密钥",
+  "Drawing": "画板",
+  "Empty drawing, click edit to start": "空白画板，点击“编辑画板”开始绘制",
+  "Edit drawing": "编辑画板",
+  "The drawing is too large to save": "画板内容过大，无法保存"
 }

@@ -23,6 +23,7 @@ import CodeBlock from "./CodeBlock";
 import CodeFence from "./CodeFence";
 import Doc from "./Doc";
 import Embed from "./Embed";
+import Excalidraw from "./Excalidraw";
 import Emoji from "./Emoji";
 import HardBreak from "./HardBreak";
 import Heading from "./Heading";
@@ -98,6 +99,7 @@ export const richExtensions: Nodes = [
   CodeFence,
   Blockquote,
   Embed,
+  Excalidraw,
   Attachment,
   Video,
   Notice,

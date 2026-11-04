@@ -100,6 +100,7 @@ export default function useDictionary() {
       video: t("Video"),
       untitled: t("Untitled"),
       none: t("None"),
+      excalidraw: t("Drawing"),
       aiWriting: t("AI writing"),
       aiContinue: t("Continue writing"),
       aiPolish: t("Polish"),
