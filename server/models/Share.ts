@@ -26,6 +26,7 @@ import Document from "./Document";
 import Team from "./Team";
 import User from "./User";
 import IdModel from "./base/IdModel";
+import { SkipChangeset } from "./decorators/Changeset";
 import Fix from "./decorators/Fix";
 import IsFQDN from "./validators/IsFQDN";
 import Length from "./validators/Length";
@@ -108,6 +109,17 @@ class Share extends IdModel<
   @Column
   urlId: string | null | undefined;
 
+  /** Hash of the password required to view the share anonymously, if any. */
+  @AllowNull
+  @SkipChangeset
+  @Column
+  passwordHash: string | null;
+
+  /** The date after which the share can no longer be viewed anonymously. */
+  @AllowNull
+  @Column
+  expiresAt: Date | null;
+
   @Unique
   @Length({ max: 255, msg: "domain must be 255 characters or less" })
   @IsFQDN
@@ -188,6 +200,11 @@ class Share extends IdModel<
   @Default(true)
   @Column
   allowIndexing: boolean;
+
+  /** Whether the share has passed its expiry date. */
+  get isExpired() {
+    return !!this.expiresAt && this.expiresAt.getTime() <= Date.now();
+  }
 
   revoke(ctx: APIContext) {
     const { user } = ctx.context.auth;

@@ -63,6 +63,14 @@ class Share extends Model implements Searchable {
   @observable
   views: number;
 
+  /** Whether a password is required to view the share anonymously. */
+  @observable
+  hasPassword: boolean;
+
+  /** When anonymous access to the share ends, if ever. */
+  @observable
+  expiresAt: string | null;
+
   /** The user that shared the document. */
   @Relation(() => User, { onDelete: "null" })
   createdBy: User;

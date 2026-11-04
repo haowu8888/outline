@@ -24,6 +24,7 @@ import { ResizingHeightContainer } from "../../ResizingHeightContainer";
 import Text from "../../Text";
 import Tooltip from "../../Tooltip";
 import { ListItem } from "../components/ListItem";
+import ShareProtection from "./ShareProtection";
 
 type Props = {
   /** The document to share. */
@@ -213,6 +214,10 @@ function PublicAccess({ document, share, sharedParent }: Props) {
           >
             {copyButton}
           </ShareLinkInput>
+        ) : null}
+
+        {share?.published && !sharedParent?.published ? (
+          <ShareProtection share={share} />
         ) : null}
 
         {share?.published && !share.includeChildDocuments ? (

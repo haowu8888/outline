@@ -13,6 +13,8 @@ export default function presentShare(share: Share, isAdmin = false) {
     createdBy: presentUser(share.user),
     includeChildDocuments: share.includeChildDocuments,
     allowIndexing: share.allowIndexing,
+    hasPassword: !!share.passwordHash,
+    expiresAt: share.expiresAt,
     lastAccessedAt: share.lastAccessedAt || undefined,
     views: share.views || 0,
     domain: share.domain,

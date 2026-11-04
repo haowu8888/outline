@@ -8,6 +8,7 @@ import isUUID from "validator/lib/isUUID";
 import { IntegrationType, TeamPreference } from "@shared/types";
 import { unicodeCLDRtoISO639 } from "@shared/utils/date";
 import documentLoader from "@server/commands/documentLoader";
+import { shareUnlockCookieName } from "@server/utils/sharePassword";
 import env from "@server/env";
 import { Integration } from "@server/models";
 import presentEnv from "@server/presenters/env";
@@ -153,6 +154,8 @@ export const renderShare = async (ctx: Context, next: Next) => {
       id: documentSlug,
       shareId,
       teamId: team?.id,
+      shareUnlockToken: (resolvedId) =>
+        ctx.cookies.get(shareUnlockCookieName(resolvedId)),
     });
     share = result.share;
     if (isUUID(shareId) && share?.urlId) {
@@ -183,8 +186,11 @@ export const renderShare = async (ctx: Context, next: Next) => {
       );
     }
   } catch (err) {
-    // If the share or document does not exist, return a 404.
-    ctx.status = 404;
+    // A locked share renders the password prompt in the client, otherwise
+    // the share or document does not exist and we return a 404.
+    if (err.id !== "share_password_required") {
+      ctx.status = 404;
+    }
   }
 
   // Allow shares to be embedded in iframes on other websites

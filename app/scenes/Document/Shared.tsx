@@ -26,12 +26,20 @@ import useCurrentUser from "~/hooks/useCurrentUser";
 import { usePostLoginPath } from "~/hooks/useLastVisitedPath";
 import useStores from "~/hooks/useStores";
 import { client } from "~/utils/ApiClient";
-import { AuthorizationError, OfflineError } from "~/utils/errors";
+import {
+  AuthorizationError,
+  OfflineError,
+  ShareExpiredError,
+  SharePasswordRequiredError,
+} from "~/utils/errors";
 import isCloudHosted from "~/utils/isCloudHosted";
 import { changeLanguage, detectLanguage } from "~/utils/language";
 import Login from "../Login";
 import Document from "./components/Document";
 import Loading from "./components/Loading";
+import SharePasswordPrompt, {
+  ShareExpired,
+} from "./components/SharePasswordPrompt";
 
 const EMPTY_OBJECT = {};
 
@@ -99,6 +107,7 @@ function SharedDocumentScene(props: Props) {
   const { t, i18n } = useTranslation();
   const [response, setResponse] = React.useState<Response>();
   const [error, setError] = React.useState<Error | null | undefined>();
+  const [reloadKey, setReloadKey] = React.useState(0);
   const { documents } = useStores();
   const [, setPostLoginPath] = usePostLoginPath();
   const { shareId = env.ROOT_SHARE_ID, documentSlug } = props.match.params;
@@ -154,10 +163,21 @@ function SharedDocumentScene(props: Props) {
       }
     }
     void fetchData();
-  }, [documents, documentSlug, shareId, ui]);
+  }, [documents, documentSlug, shareId, ui, reloadKey]);
+
+  const handleUnlocked = React.useCallback(() => {
+    setError(null);
+    setReloadKey((key) => key + 1);
+  }, []);
 
   if (error) {
-    if (error instanceof OfflineError) {
+    if (error instanceof SharePasswordRequiredError && shareId) {
+      return (
+        <SharePasswordPrompt shareId={shareId} onUnlocked={handleUnlocked} />
+      );
+    } else if (error instanceof ShareExpiredError) {
+      return <ShareExpired />;
+    } else if (error instanceof OfflineError) {
       return <ErrorOffline />;
     } else if (error instanceof AuthorizationError) {
       setPostLoginPath(props.location.pathname);

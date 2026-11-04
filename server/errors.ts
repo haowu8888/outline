@@ -81,6 +81,20 @@ export function UserSuspendedError({
   );
 }
 
+export function SharePasswordRequiredError(
+  message = "A password is required to view this document"
+) {
+  return httpErrors(403, message, {
+    id: "share_password_required",
+  });
+}
+
+export function ShareExpiredError(message = "This share link has expired") {
+  return httpErrors(403, message, {
+    id: "share_expired",
+  });
+}
+
 export function InvalidRequestError(message = "Request invalid") {
   return httpErrors(400, message, {
     id: "invalid_request",

@@ -8,9 +8,12 @@ import {
   AuthorizationError,
   AuthenticationError,
   PaymentRequiredError,
+  ShareExpiredError,
+  SharePasswordRequiredError,
 } from "@server/errors";
 import { Collection, Document, Share, User, Team } from "@server/models";
 import { authorize, can } from "@server/policies";
+import { verifyShareUnlockToken } from "@server/utils/sharePassword";
 
 type Props = {
   id?: string;
@@ -18,6 +21,8 @@ type Props = {
   teamId?: string;
   user?: User;
   includeState?: boolean;
+  /** Returns the unlock token presented for a password protected share. */
+  shareUnlockToken?: (shareId: string) => string | undefined;
 };
 
 type Result = {
@@ -32,6 +37,7 @@ export default async function loadDocument({
   teamId,
   user,
   includeState,
+  shareUnlockToken,
 }: Props): Promise<Result> {
   let document;
   let collection;
@@ -151,6 +157,21 @@ export default async function loadDocument({
     // have permission to read the document, so we can throw an error.
     if (!share.published) {
       throw AuthorizationError();
+    }
+
+    if (share.isExpired) {
+      throw ShareExpiredError();
+    }
+
+    if (
+      share.passwordHash &&
+      !verifyShareUnlockToken(
+        shareUnlockToken?.(share.id),
+        share.id,
+        share.passwordHash
+      )
+    ) {
+      throw SharePasswordRequiredError();
     }
 
     // It is possible to disable sharing at the collection so we must check

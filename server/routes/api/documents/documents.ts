@@ -18,6 +18,7 @@ import slugify from "@shared/utils/slugify";
 import documentCreator from "@server/commands/documentCreator";
 import documentDuplicator from "@server/commands/documentDuplicator";
 import documentLoader from "@server/commands/documentLoader";
+import { shareUnlockCookieName } from "@server/utils/sharePassword";
 import documentMover from "@server/commands/documentMover";
 import documentPermanentDeleter from "@server/commands/documentPermanentDeleter";
 import documentUpdater from "@server/commands/documentUpdater";
@@ -572,6 +573,8 @@ router.post(
       shareId,
       user,
       teamId: teamFromCtx?.id,
+      shareUnlockToken: (resolvedId) =>
+        ctx.cookies.get(shareUnlockCookieName(resolvedId)),
     });
     const isPublic = cannot(user, "read", document);
     const [serializedDocument, team] = await Promise.all([
@@ -993,6 +996,8 @@ router.post(
         teamId: teamFromCtx?.id,
         shareId,
         user,
+        shareUnlockToken: (resolvedId) =>
+          ctx.cookies.get(shareUnlockCookieName(resolvedId)),
       });
 
       share = loaded.share;

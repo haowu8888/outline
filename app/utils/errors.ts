@@ -23,3 +23,7 @@ export class RateLimitExceededError extends ExtendableError {}
 export class RequestError extends ExtendableError {}
 
 export class UpdateRequiredError extends ExtendableError {}
+
+export class SharePasswordRequiredError extends ExtendableError {}
+
+export class ShareExpiredError extends ExtendableError {}

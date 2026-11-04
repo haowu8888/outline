@@ -1088,3 +1088,155 @@ describe("#shares.revoke", () => {
     expect(res.status).toEqual(403);
   });
 });
+
+describe("share password and expiry", () => {
+  async function buildPublicShare() {
+    const team = await buildTeam({ sharing: true });
+    const admin = await buildAdmin({ teamId: team.id });
+    const collection = await buildCollection({
+      teamId: team.id,
+      userId: admin.id,
+      sharing: true,
+    });
+    const document = await buildDocument({
+      teamId: team.id,
+      userId: admin.id,
+      collectionId: collection.id,
+    });
+    const share = await buildShare({
+      documentId: document.id,
+      teamId: team.id,
+      userId: admin.id,
+    });
+    return { admin, document, share };
+  }
+
+  function unlockCookie(res: { headers: { get(name: string): string | null } }) {
+    const header = res.headers.get("set-cookie") ?? "";
+    const match = header.match(/(shareUnlock-[^=]+=[^;]+)/);
+    return match ? match[1] : undefined;
+  }
+
+  it("should require the password before returning the document", async () => {
+    const { admin, document, share } = await buildPublicShare();
+    const update = await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: "secret-pw" },
+    });
+    const updated = await update.json();
+    expect(update.status).toEqual(200);
+    expect(updated.data.hasPassword).toEqual(true);
+    expect(updated.data.passwordHash).toBeUndefined();
+
+    const locked = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+    });
+    expect(locked.status).toEqual(403);
+    expect((await locked.json()).error).toEqual("share_password_required");
+
+    const wrong = await server.post("/api/shares.unlock", {
+      body: { shareId: share.id, password: "nope" },
+    });
+    expect(wrong.status).toEqual(400);
+    expect(unlockCookie(wrong)).toBeUndefined();
+
+    const unlock = await server.post("/api/shares.unlock", {
+      body: { shareId: share.id, password: "secret-pw" },
+    });
+    expect(unlock.status).toEqual(200);
+    const cookie = unlockCookie(unlock);
+    expect(cookie).toBeDefined();
+
+    const res = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+      headers: { Cookie: cookie },
+    });
+    expect(res.status).toEqual(200);
+    expect((await res.json()).data.id).toEqual(document.id);
+  });
+
+  it("should invalidate unlock cookies when the password changes", async () => {
+    const { admin, share } = await buildPublicShare();
+    await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: "first-pw" },
+    });
+    const unlock = await server.post("/api/shares.unlock", {
+      body: { shareId: share.id, password: "first-pw" },
+    });
+    const cookie = unlockCookie(unlock);
+    await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: "second-pw" },
+    });
+    const res = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+      headers: { Cookie: cookie },
+    });
+    expect(res.status).toEqual(403);
+  });
+
+  it("should allow team members without the password", async () => {
+    const { admin, share } = await buildPublicShare();
+    await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: "secret-pw" },
+    });
+    const res = await server.post("/api/documents.info", {
+      body: { token: admin.getJwtToken(), shareId: share.id },
+    });
+    expect(res.status).toEqual(200);
+  });
+
+  it("should remove the password when set to null", async () => {
+    const { admin, share } = await buildPublicShare();
+    await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: "secret-pw" },
+    });
+    const update = await server.post("/api/shares.update", {
+      body: { token: admin.getJwtToken(), id: share.id, password: null },
+    });
+    expect((await update.json()).data.hasPassword).toEqual(false);
+    const res = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+    });
+    expect(res.status).toEqual(200);
+  });
+
+  it("should reject anonymous access after expiry", async () => {
+    const { admin, share } = await buildPublicShare();
+    const past = await server.post("/api/shares.update", {
+      body: {
+        token: admin.getJwtToken(),
+        id: share.id,
+        expiresAt: new Date(Date.now() - 1000).toISOString(),
+      },
+    });
+    expect(past.status).toEqual(400);
+
+    await share.update({ expiresAt: new Date(Date.now() - 1000) });
+    const res = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+    });
+    expect(res.status).toEqual(403);
+    expect((await res.json()).error).toEqual("share_expired");
+
+    const unlock = await server.post("/api/shares.unlock", {
+      body: { shareId: share.id, password: "anything" },
+    });
+    expect(unlock.status).toEqual(404);
+  });
+
+  it("should keep working before expiry", async () => {
+    const { admin, share } = await buildPublicShare();
+    const update = await server.post("/api/shares.update", {
+      body: {
+        token: admin.getJwtToken(),
+        id: share.id,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      },
+    });
+    expect(update.status).toEqual(200);
+    expect((await update.json()).data.expiresAt).toBeTruthy();
+    const res = await server.post("/api/documents.info", {
+      body: { shareId: share.id },
+    });
+    expect(res.status).toEqual(200);
+  });
+});

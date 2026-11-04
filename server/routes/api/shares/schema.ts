@@ -59,6 +59,10 @@ export const SharesUpdateSchema = BaseSchema.extend({
         message: "must contain only alphanumeric and dashes",
       })
       .nullish(),
+    /** A new password for anonymous access, null or empty removes it. */
+    password: z.string().max(255).nullish(),
+    /** When anonymous access ends, null removes the expiry. */
+    expiresAt: z.coerce.date().nullish(),
   }),
 });
 
@@ -91,3 +95,13 @@ export const SharesRevokeSchema = BaseSchema.extend({
 });
 
 export type SharesRevokeReq = z.infer<typeof SharesRevokeSchema>;
+
+export const SharesUnlockSchema = BaseSchema.extend({
+  body: z.object({
+    /** The share id or url slug. */
+    shareId: z.string(),
+    password: z.string().max(255),
+  }),
+});
+
+export type SharesUnlockReq = z.infer<typeof SharesUnlockSchema>;

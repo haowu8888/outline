@@ -17,6 +17,8 @@ import {
   RateLimitExceededError,
   RequestError,
   ServiceUnavailableError,
+  ShareExpiredError,
+  SharePasswordRequiredError,
   UnprocessableEntityError,
   UpdateRequiredError,
 } from "./errors";
@@ -202,6 +204,14 @@ class ApiClient {
     if (response.status === 403) {
       if (error.error === "user_suspended") {
         await stores.auth.logout(false, false);
+      }
+
+      if (error.error === "share_password_required") {
+        throw new SharePasswordRequiredError(error.message);
+      }
+
+      if (error.error === "share_expired") {
+        throw new ShareExpiredError(error.message);
       }
 
       throw new AuthorizationError(error.message);

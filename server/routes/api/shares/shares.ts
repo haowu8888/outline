@@ -1,14 +1,25 @@
 import Router from "koa-router";
 import isUndefined from "lodash/isUndefined";
 import { FindOptions, Op, WhereOptions } from "sequelize";
-import { NotFoundError } from "@server/errors";
+import isUUID from "validator/lib/isUUID";
+import { UrlHelper } from "@shared/utils/UrlHelper";
+import { NotFoundError, ValidationError } from "@server/errors";
 import auth from "@server/middlewares/authentication";
+import { rateLimiter } from "@server/middlewares/rateLimiter";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
 import { Document, User, Share, Team, Collection } from "@server/models";
 import { authorize } from "@server/policies";
 import { presentShare, presentPolicies } from "@server/presenters";
 import { APIContext } from "@server/types";
+import { getTeamFromContext } from "@server/utils/passport";
+import { RateLimiterStrategy } from "@server/utils/RateLimiter";
+import {
+  createShareUnlockToken,
+  hashSharePassword,
+  shareUnlockCookieName,
+  verifySharePassword,
+} from "@server/utils/sharePassword";
 import pagination from "../middlewares/pagination";
 import * as T from "./schema";
 
@@ -230,8 +241,15 @@ router.post(
   validate(T.SharesUpdateSchema),
   transaction(),
   async (ctx: APIContext<T.SharesUpdateReq>) => {
-    const { id, includeChildDocuments, published, urlId, allowIndexing } =
-      ctx.input.body;
+    const {
+      id,
+      includeChildDocuments,
+      published,
+      urlId,
+      allowIndexing,
+      password,
+      expiresAt,
+    } = ctx.input.body;
 
     const { user } = ctx.state.auth;
     authorize(user, "share", user.team);
@@ -262,11 +280,74 @@ router.post(
       share.allowIndexing = allowIndexing;
     }
 
+    if (!isUndefined(password)) {
+      share.passwordHash = password ? hashSharePassword(password) : null;
+    }
+
+    if (!isUndefined(expiresAt)) {
+      if (expiresAt && expiresAt.getTime() <= Date.now()) {
+        throw ValidationError("expiresAt must be in the future");
+      }
+      share.expiresAt = expiresAt ?? null;
+    }
+
     await share.saveWithCtx(ctx);
 
     ctx.body = {
       data: presentShare(share, user.isAdmin),
       policies: presentPolicies(user, [share]),
+    };
+  }
+);
+
+router.post(
+  "shares.unlock",
+  rateLimiter(RateLimiterStrategy.TenPerMinute),
+  auth({ optional: true }),
+  validate(T.SharesUnlockSchema),
+  async (ctx: APIContext<T.SharesUnlockReq>) => {
+    const { shareId, password } = ctx.input.body;
+    let where: WhereOptions<Share>;
+
+    if (isUUID(shareId)) {
+      where = { id: shareId };
+    } else if (UrlHelper.SHARE_URL_SLUG_REGEX.test(shareId)) {
+      const team = await getTeamFromContext(ctx);
+      if (!team) {
+        throw NotFoundError();
+      }
+      where = { teamId: team.id, urlId: shareId };
+    } else {
+      throw NotFoundError();
+    }
+
+    const share = await Share.unscoped().findOne({
+      where: { ...where, revokedAt: { [Op.is]: null }, published: true },
+    });
+
+    if (!share || share.isExpired) {
+      throw NotFoundError();
+    }
+
+    if (
+      !share.passwordHash ||
+      !verifySharePassword(password, share.passwordHash)
+    ) {
+      throw ValidationError("Incorrect password");
+    }
+
+    const { token, expires } = createShareUnlockToken(
+      share.id,
+      share.passwordHash
+    );
+    ctx.cookies.set(shareUnlockCookieName(share.id), token, {
+      httpOnly: true,
+      sameSite: "lax",
+      expires,
+    });
+
+    ctx.body = {
+      success: true,
     };
   }
 );
