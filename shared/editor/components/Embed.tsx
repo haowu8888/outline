@@ -17,9 +17,19 @@ type Props = ComponentProps & {
 
 const Embed = (props: Props) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
-  const { node, isEditable, onChangeSize } = props;
+  const { node, isEditable, onChangeSize, embeds } = props;
+  const match = React.useMemo(
+    () => getMatchingEmbed(embeds, node.attrs.href),
+    [embeds, node.attrs.href]
+  );
+  const preferredHeight = match?.embed.height;
   const naturalWidth = 0;
-  const naturalHeight = 400;
+  const naturalHeight =
+    !match || preferredHeight === undefined
+      ? 400
+      : typeof preferredHeight === "function"
+      ? preferredHeight(match.matches)
+      : preferredHeight;
   const isResizable = !!onChangeSize;
 
   const { width, height, setSize, handlePointerDown, dragging } = useDragResize(
@@ -45,7 +55,7 @@ const Embed = (props: Props) => {
 
   const style: React.CSSProperties = {
     width: width || "100%",
-    height: height || 400,
+    height: height || naturalHeight,
     maxWidth: "100%",
     pointerEvents: dragging ? "none" : "all",
   };

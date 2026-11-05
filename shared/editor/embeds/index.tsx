@@ -81,6 +81,8 @@ export class EmbedDescriptor {
   component?: React.FunctionComponent<EmbedProps>;
   /** The integration settings, if any */
   settings?: IntegrationSettings<IntegrationType.Embed>;
+  /** The default height of the frame in pixels, before the user resizes it */
+  height?: number | ((matches: RegExpMatchArray) => number);
 
   constructor(options: Omit<EmbedDescriptor, "matcher">) {
     this.icon = options.icon;
@@ -98,6 +100,7 @@ export class EmbedDescriptor {
     this.attrs = options.attrs;
     this.visible = options.visible;
     this.component = options.component;
+    this.height = options.height;
   }
 
   matcher(url: string): false | RegExpMatchArray {
@@ -119,6 +122,21 @@ export class EmbedDescriptor {
 
     return false;
   }
+}
+
+const VIDEO_HEIGHT = 420;
+const NETEASE_SONG = 2;
+const NETEASE_TYPES: Record<string, number> = {
+  playlist: 0,
+  album: 1,
+  song: NETEASE_SONG,
+  program: 3,
+  djradio: 4,
+};
+
+/** The outchain player type of a NetEase Cloud Music page or player URL. */
+function neteaseType(kind: string) {
+  return /^\d$/.test(kind) ? Number(kind) : NETEASE_TYPES[kind];
 }
 
 const embeds: EmbedDescriptor[] = [
@@ -154,14 +172,23 @@ const embeds: EmbedDescriptor[] = [
     component: Berrycast,
   }),
   new EmbedDescriptor({
-    title: "Bilibili",
-    keywords: "video",
-    defaultHidden: true,
+    title: "哔哩哔哩",
+    keywords: "bilibili blbl b站 video 视频",
     regexMatch: [
-      /(?:https?:\/\/)?(www\.bilibili\.com)\/video\/([\w\d]+)?(\?\S+)?/i,
+      /^https:\/\/(?:www\.|m\.)?bilibili\.com\/video\/(BV[0-9A-Za-z]{10}|av\d+)\/?(?:\?(?:.*&)?p=(\d+))?/i,
+      /^https:\/\/player\.bilibili\.com\/player\.html\?.+$/,
     ],
-    transformMatch: (matches: RegExpMatchArray) =>
-      `https://player.bilibili.com/player.html?bvid=${matches[2]}&page=1&high_quality=1&autoplay=0`,
+    transformMatch: (matches: RegExpMatchArray) => {
+      if (!matches[1]) {
+        return matches[0];
+      }
+      const id = matches[1];
+      const key = /^av/i.test(id) ? `aid=${id.slice(2)}` : `bvid=${id}`;
+      return `https://player.bilibili.com/player.html?${key}&p=${
+        matches[2] ?? 1
+      }&high_quality=1&autoplay=0`;
+    },
+    height: VIDEO_HEIGHT,
     icon: <Img src="/images/bilibili.png" alt="Bilibili" />,
   }),
   new EmbedDescriptor({
@@ -659,6 +686,100 @@ const embeds: EmbedDescriptor[] = [
     ],
     icon: <Img src="/images/youtube.png" alt="YouTube" />,
     component: YouTube,
+  }),
+  new EmbedDescriptor({
+    title: "优酷",
+    keywords: "youku yk video 视频",
+    regexMatch: [
+      /^https:\/\/v\.youku\.com\/v_show\/id_([0-9A-Za-z=]+)\.html/,
+      /^https:\/\/player\.youku\.com\/embed\/([0-9A-Za-z=]+)/,
+    ],
+    transformMatch: (matches: RegExpMatchArray) =>
+      `https://player.youku.com/embed/${matches[1]}`,
+    height: VIDEO_HEIGHT,
+    icon: <Img src="/images/youku.png" alt="Youku" />,
+  }),
+  new EmbedDescriptor({
+    title: "腾讯视频",
+    keywords: "tencent qq txsp video 视频",
+    regexMatch: [
+      /^https:\/\/v\.qq\.com\/x\/(?:cover\/[0-9A-Za-z]+|page)\/([0-9A-Za-z]+)\.html/,
+      /^https:\/\/v\.qq\.com\/(?:txp\/)?iframe\/player\.html\?(?:.*&)?vid=([0-9A-Za-z]+)/,
+    ],
+    transformMatch: (matches: RegExpMatchArray) =>
+      `https://v.qq.com/txp/iframe/player.html?vid=${matches[1]}&autoplay=false`,
+    height: VIDEO_HEIGHT,
+    icon: <Img src="/images/tencent-video.png" alt="Tencent Video" />,
+  }),
+  new EmbedDescriptor({
+    title: "淘宝视频",
+    keywords: "taobao tbsp video 视频",
+    regexMatch: [/^https:\/\/cloud\.video\.taobao\.com\/(?:play|vplay)\/.+$/],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    height: VIDEO_HEIGHT,
+    icon: <Img src="/images/taobao.png" alt="Taobao" />,
+  }),
+  new EmbedDescriptor({
+    title: "网易云音乐",
+    keywords: "netease wangyiyun wyyyy music 音乐",
+    regexMatch: [
+      /^https:\/\/music\.163\.com\/(?:#\/)?(?:m\/)?(song|playlist|album|program|djradio)\?(?:.*&)?id=(\d+)/,
+      /^https:\/\/music\.163\.com\/outchain\/player\?(?:.*&)?type=(\d)&(?:.*&)?id=(\d+)/,
+    ],
+    transformMatch: (matches: RegExpMatchArray) => {
+      const type = neteaseType(matches[1]);
+      return `https://music.163.com/outchain/player?type=${type}&id=${
+        matches[2]
+      }&auto=0&height=${type === NETEASE_SONG ? 66 : 430}`;
+    },
+    height: (matches: RegExpMatchArray) =>
+      neteaseType(matches[1]) === NETEASE_SONG ? 86 : 450,
+    icon: <Img src="/images/netease-music.png" alt="NetEase Cloud Music" />,
+  }),
+  new EmbedDescriptor({
+    title: "高德地图",
+    keywords: "amap gaode gddt map 地图",
+    regexMatch: [/^https:\/\/(?:uri|ditu|www)\.amap\.com\/.+$/],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    icon: <Img src="/images/amap.png" alt="AMap" />,
+  }),
+  new EmbedDescriptor({
+    title: "墨刀",
+    keywords: "modao md prototype 原型",
+    regexMatch: [/^https:\/\/(?:[\w-]+\.)?modao\.cc\/(?:app|proto)\/.+$/],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    icon: <Img src="/images/modao.png" alt="Modao" />,
+  }),
+  new EmbedDescriptor({
+    title: "ProcessOn",
+    keywords: "processon pro diagram mindmap 流程图 思维导图",
+    regexMatch: [/^https:\/\/(?:www\.)?processon\.com\/(?:view|embed)\/.+$/],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    icon: <Img src="/images/processon.png" alt="ProcessOn" />,
+  }),
+  new EmbedDescriptor({
+    title: "码上掘金",
+    keywords: "juejin mashangjuejin msjj code 代码",
+    regexMatch: [/^https:\/\/code\.juejin\.cn\/pen\/(\d+)/],
+    transformMatch: (matches: RegExpMatchArray) =>
+      `https://code.juejin.cn/pen/${matches[1]}`,
+    icon: <Img src="/images/juejin.png" alt="Juejin" />,
+  }),
+  new EmbedDescriptor({
+    title: "宜搭",
+    keywords: "yida aliwork form 表单",
+    regexMatch: [/^https:\/\/(?:[\w-]+\.)?aliwork\.com\/.+$/],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    icon: <Img src="/images/yida.png" alt="Yida" />,
+  }),
+  new EmbedDescriptor({
+    title: "金数据",
+    keywords: "jinshuju jsj form survey 表单 问卷",
+    regexMatch: [
+      /^https:\/\/(?:[\w-]+\.)?(?:jinshuju\.(?:net|com)|jsj\.top)\/f\/.+$/,
+    ],
+    transformMatch: (matches: RegExpMatchArray) => matches[0],
+    icon: <Img src="/images/jinshuju.png" alt="Jinshuju" />,
   }),
   /* The generic iframe embed should always be the last one */
   new EmbedDescriptor({
