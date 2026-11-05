@@ -1,0 +1,74 @@
+# Single-file build used by the Flow pipeline. Compared to Dockerfile.base +
+# Dockerfile, every download happens in a layer that only depends on the
+# lockfile or the base image, so a code change only reruns `yarn build`.
+ARG APP_PATH=/opt/outline
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ARG DEBIAN_MIRROR=deb.debian.org
+ARG NODE_HEAP_MB=24000
+
+# Development dependencies, rebuilt only when the lockfile changes.
+FROM node:20 AS deps
+ARG APP_PATH
+ARG NPM_REGISTRY
+ARG DEBIAN_MIRROR
+WORKDIR $APP_PATH
+RUN sed -i "s/deb.debian.org/$DEBIAN_MIRROR/g" /etc/apt/sources.list.d/debian.sources && \
+  apt-get update && apt-get install -y cmake && rm -rf /var/lib/apt/lists/*
+COPY ./package.json ./yarn.lock ./
+COPY ./patches ./patches
+RUN sed -i -E "s#https://registry\.(yarnpkg|npmjs)\.(com|org)/#$NPM_REGISTRY/#g" yarn.lock && \
+  yarn config set registry "$NPM_REGISTRY/" && \
+  yarn install --no-optional --frozen-lockfile --network-timeout 1000000 && \
+  yarn cache clean
+
+# Production dependencies, also independent of the source code.
+FROM deps AS prod-deps
+RUN rm -rf node_modules && \
+  yarn install --production=true --frozen-lockfile --network-timeout 1000000 && \
+  yarn cache clean
+
+FROM deps AS build
+ARG NODE_HEAP_MB
+ENV NODE_OPTIONS="--max-old-space-size=${NODE_HEAP_MB}"
+COPY . .
+ARG CDN_URL
+RUN yarn build
+
+FROM node:20-slim AS runner
+LABEL org.opencontainers.image.source="https://github.com/outline/outline"
+ARG APP_PATH
+ARG DEBIAN_MIRROR
+WORKDIR $APP_PATH
+ENV NODE_ENV=production
+
+# Install wget to healthcheck the server, before the copies so it stays cached
+RUN sed -i "s/deb.debian.org/$DEBIAN_MIRROR/g" /etc/apt/sources.list.d/debian.sources && \
+  apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user compatible with Debian and BusyBox based images
+RUN addgroup --gid 1001 nodejs && \
+  adduser --uid 1001 --ingroup nodejs nodejs && \
+  mkdir -p /var/lib/outline && \
+  chown -R nodejs:nodejs /var/lib/outline
+
+ENV FILE_STORAGE_LOCAL_ROOT_DIR=/var/lib/outline/data
+RUN mkdir -p "$FILE_STORAGE_LOCAL_ROOT_DIR" && \
+  chown -R nodejs:nodejs "$FILE_STORAGE_LOCAL_ROOT_DIR" && \
+  chmod 1777 "$FILE_STORAGE_LOCAL_ROOT_DIR"
+
+COPY --from=prod-deps $APP_PATH/node_modules ./node_modules
+COPY --from=build $APP_PATH/package.json ./package.json
+COPY --from=build $APP_PATH/.sequelizerc ./.sequelizerc
+COPY --from=build $APP_PATH/server ./server
+COPY --from=build $APP_PATH/public ./public
+COPY --from=build --chown=nodejs:nodejs $APP_PATH/build ./build
+
+ENV PORT=3000
+VOLUME /var/lib/outline/data
+
+USER nodejs
+
+HEALTHCHECK --interval=1m CMD wget -qO- "http://localhost:${PORT:-3000}/_health" | grep -q "OK" || exit 1
+
+EXPOSE 3000
+CMD ["yarn", "start"]

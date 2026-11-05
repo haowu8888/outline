@@ -3,6 +3,7 @@ import { PassThrough } from "stream";
 import Router from "koa-router";
 import nodeFetch from "node-fetch";
 import { UserRole } from "@shared/types";
+import { AI_ERROR_MARK, AI_KEEP_ALIVE } from "@shared/utils/ai";
 import { InvalidRequestError } from "@server/errors";
 import Logger from "@server/logging/Logger";
 import auth from "@server/middlewares/authentication";
@@ -83,23 +84,27 @@ function isApiResponse(response: {
 const NOT_OPENAI_FORMAT =
   "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1";
 
-/** How long to wait for the API to start answering. */
-const RESPONSE_TIMEOUT_MS = 55 * 1000;
+/** How long to wait for the API to start answering, some models think for minutes. */
+const RESPONSE_TIMEOUT_MS = 5 * 60 * 1000;
 
 /** How long an AI request may keep the connection open, the server default is much shorter. */
-const SOCKET_TIMEOUT_MS = 5 * 60 * 1000;
+const SOCKET_TIMEOUT_MS = 10 * 60 * 1000;
+
+/** How often to send a keep-alive while waiting, proxies close idle connections after 60s. */
+const KEEP_ALIVE_MS = 15 * 1000;
 
 const SLOW_API =
-  "The AI API did not respond within 55 seconds, try a faster model";
+  "The AI API did not respond within 5 minutes, try a faster model";
 
 /**
  * Abort the request when the API has not answered in time.
  *
  * @param controller The controller of the upstream request.
+ * @param ms How long to wait.
  * @returns A function that stops the timer once the API answered.
  */
-function abortWhenSlow(controller: AbortController) {
-  const timer = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS);
+function abortWhenSlow(controller: AbortController, ms: number) {
+  const timer = setTimeout(() => controller.abort(), ms);
   return () => clearTimeout(timer);
 }
 
@@ -220,51 +225,63 @@ router.post(
     // Slow models can take longer than the server's default request timeout.
     ctx.req.setTimeout(SOCKET_TIMEOUT_MS);
     const controller = new AbortController();
-    const answered = abortWhenSlow(controller);
+    const answered = abortWhenSlow(controller, RESPONSE_TIMEOUT_MS);
+    const output = new PassThrough();
+    // Whitespace before the JSON body keeps proxies from closing the connection.
+    const keepAlive = setInterval(() => output.write(" "), KEEP_ALIVE_MS);
+    const respond = (data: { ok: boolean; status: number; detail: string }) => {
+      clearInterval(keepAlive);
+      output.end(JSON.stringify({ data }));
+    };
+    ctx.req.on("close", () => {
+      clearInterval(keepAlive);
+      controller.abort();
+    });
 
-    try {
-      // Streaming answers as soon as the model starts, without waiting for it to finish.
-      const response = await requestCompletion(
-        config,
-        {
-          stream: true,
-          max_tokens: 8,
-          messages: [{ role: "user", content: "ping" }],
-        },
-        controller.signal
-      );
-      answered();
-      const type = response.headers.get("content-type") ?? "";
-      let ok = response.ok;
-      let detail = "";
-      if (!ok) {
-        detail = (await response.text()).slice(0, 300);
-      } else if (/event-stream/i.test(type)) {
-        controller.abort();
-      } else {
-        const text = await response.text();
-        try {
-          ok = Array.isArray(JSON.parse(text).choices);
-        } catch (_err) {
-          ok = false;
+    void (async () => {
+      try {
+        // Streaming answers as soon as the model starts, without waiting for it to finish.
+        const response = await requestCompletion(
+          config,
+          {
+            stream: true,
+            max_tokens: 8,
+            messages: [{ role: "user", content: "ping" }],
+          },
+          controller.signal
+        );
+        answered();
+        const type = response.headers.get("content-type") ?? "";
+        let ok = response.ok;
+        let detail = "";
+        if (!ok) {
+          detail = (await response.text()).slice(0, 300);
+        } else if (/event-stream/i.test(type)) {
+          controller.abort();
+        } else {
+          const text = await response.text();
+          try {
+            ok = Array.isArray(JSON.parse(text).choices);
+          } catch (_err) {
+            ok = false;
+          }
         }
-      }
-      if (response.ok && !ok) {
-        detail = NOT_OPENAI_FORMAT;
-      }
-      ctx.body = {
-        data: { ok, status: response.status, detail },
-      };
-    } catch (err) {
-      answered();
-      ctx.body = {
-        data: {
+        if (response.ok && !ok) {
+          detail = NOT_OPENAI_FORMAT;
+        }
+        respond({ ok, status: response.status, detail });
+      } catch (err) {
+        answered();
+        respond({
           ok: false,
           status: 0,
           detail: controller.signal.aborted ? SLOW_API : err.message,
-        },
-      };
-    }
+        });
+      }
+    })();
+
+    ctx.type = "application/json";
+    ctx.body = output;
   }
 );
 
@@ -333,82 +350,92 @@ router.post(
 
     ctx.req.setTimeout(SOCKET_TIMEOUT_MS);
     const controller = new AbortController();
-    const answered = abortWhenSlow(controller);
-    let response;
-    try {
-      response = await requestCompletion(
-        config,
-        {
-          stream: true,
-          messages: buildMessages({ action, text, instruction, title }),
-        },
-        controller.signal
-      );
-    } catch (err) {
-      throw InvalidRequestError(
-        controller.signal.aborted ? SLOW_API : err.message
-      );
-    } finally {
-      answered();
-    }
-
-    if (!response.ok || !response.body) {
-      const detail = await response.text().catch(() => "");
-      Logger.warn("AI request failed", {
-        status: response.status,
-        detail: detail.slice(0, 500),
-      });
-      let message = detail.slice(0, 200);
-      try {
-        message = JSON.parse(detail).error?.message ?? message;
-      } catch (_err) {
-        // not json, keep the raw text
-      }
-      throw InvalidRequestError(
-        `AI request failed with status ${response.status}: ${message}`
-      );
-    }
-
-    if (!isApiResponse(response)) {
-      controller.abort();
-      throw InvalidRequestError(NOT_OPENAI_FORMAT);
-    }
-
     const output = new PassThrough();
-
-    // Some providers ignore "stream" and answer with a single JSON body.
-    if (/json/i.test(response.headers.get("content-type") ?? "")) {
-      const json = await response.json().catch(() => null);
-      const content = json?.choices?.[0]?.message?.content;
-      if (typeof content !== "string") {
-        throw InvalidRequestError(json?.error?.message ?? NOT_OPENAI_FORMAT);
+    // Answer right away and keep the connection busy while a slow model thinks,
+    // otherwise proxies in front of the app give up before the first token.
+    const keepAlive = setInterval(
+      () => output.write(AI_KEEP_ALIVE),
+      KEEP_ALIVE_MS
+    );
+    output.on("close", () => clearInterval(keepAlive));
+    output.on("finish", () => clearInterval(keepAlive));
+    const fail = (message: string) => {
+      if (!output.writableEnded) {
+        output.end(AI_ERROR_MARK + message);
       }
-      output.end(content);
-      ctx.type = "text/plain; charset=utf-8";
-      ctx.body = output;
-      return;
-    }
-
-    let buffer = "";
-
-    response.body.on("data", (chunk: Buffer) => {
-      const parsed = parseStreamChunk(buffer + chunk.toString("utf8"));
-      buffer = parsed.rest;
-      parsed.deltas.forEach((delta) => output.write(delta));
-    });
-    response.body.on("end", () => {
-      parseStreamChunk(buffer + "\n").deltas.forEach((delta) =>
-        output.write(delta)
-      );
-      output.end();
-    });
-    response.body.on("error", (err: Error) => {
-      Logger.warn("AI stream interrupted", { error: err.message });
-      output.end();
-    });
+    };
 
     // Stop the upstream request when the browser goes away.
     ctx.req.on("close", () => controller.abort());
+
+    void (async () => {
+      const answered = abortWhenSlow(controller, RESPONSE_TIMEOUT_MS);
+      try {
+        const response = await requestCompletion(
+          config,
+          {
+            stream: true,
+            messages: buildMessages({ action, text, instruction, title }),
+          },
+          controller.signal
+        );
+        answered();
+
+        if (!response.ok || !response.body) {
+          const detail = await response.text().catch(() => "");
+          Logger.warn("AI request failed", {
+            status: response.status,
+            detail: detail.slice(0, 500),
+          });
+          let message = detail.slice(0, 200);
+          try {
+            message = JSON.parse(detail).error?.message ?? message;
+          } catch (_err) {
+            // not json, keep the raw text
+          }
+          fail(`AI request failed with status ${response.status}: ${message}`);
+          return;
+        }
+
+        if (!isApiResponse(response)) {
+          controller.abort();
+          fail(NOT_OPENAI_FORMAT);
+          return;
+        }
+
+        // Some providers ignore "stream" and answer with a single JSON body.
+        if (/json/i.test(response.headers.get("content-type") ?? "")) {
+          const json = await response.json().catch(() => null);
+          const content = json?.choices?.[0]?.message?.content;
+          if (typeof content === "string") {
+            output.end(content);
+          } else {
+            fail(json?.error?.message ?? NOT_OPENAI_FORMAT);
+          }
+          return;
+        }
+
+        let buffer = "";
+        response.body.on("data", (chunk: Buffer) => {
+          const parsed = parseStreamChunk(buffer + chunk.toString("utf8"));
+          buffer = parsed.rest;
+          parsed.deltas.forEach((delta) => output.write(delta));
+        });
+        response.body.on("end", () => {
+          parseStreamChunk(buffer + "\n").deltas.forEach((delta) =>
+            output.write(delta)
+          );
+          output.end();
+        });
+        response.body.on("error", (err: Error) => {
+          Logger.warn("AI stream interrupted", { error: err.message });
+          output.end();
+        });
+      } catch (err) {
+        answered();
+        fail(controller.signal.aborted ? SLOW_API : err.message);
+      }
+    })();
 
     ctx.set("Cache-Control", "no-cache");
     ctx.set("X-Accel-Buffering", "no");

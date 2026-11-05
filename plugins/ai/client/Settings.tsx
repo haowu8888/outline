@@ -99,7 +99,7 @@ function AISettings() {
         toast.success(t("Connection successful"));
       } else {
         toast.error(
-          `${t("Connection failed")} (${res.data.status}) ${res.data.detail}`
+          `${t("Connection failed")} (${res.data.status}) ${t(res.data.detail)}`
         );
       }
     } catch (err) {
@@ -176,40 +176,42 @@ function AISettings() {
               model: settings.defaultModel,
             })}
           >
-            <Input
-              id="model"
-              value={model}
-              placeholder={settings.defaultModel}
-              onChange={(ev) => setModel(ev.target.value)}
-            />
-            <ModelRow gap={8} align="center">
-              <Button
-                type="button"
-                neutral
-                onClick={handleFetchModels}
-                disabled={fetching}
-              >
-                {fetching ? `${t("Fetching")}…` : t("Fetch models")}
-              </Button>
-              {models.length > 0 && (
-                <ModelSelect
-                  aria-label={t("Available models")}
-                  value={models.includes(model) ? model : ""}
-                  onChange={(ev) => setModel(ev.target.value)}
+            <div>
+              <Input
+                id="model"
+                value={model}
+                placeholder={settings.defaultModel}
+                onChange={(ev) => setModel(ev.target.value)}
+              />
+              <ModelRow gap={8} align="center">
+                <Button
+                  type="button"
+                  neutral
+                  onClick={handleFetchModels}
+                  disabled={fetching}
                 >
-                  <option value="" disabled>
-                    {t("Choose from {{ count }} models", {
-                      count: models.length,
-                    })}
-                  </option>
-                  {models.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
+                  {fetching ? `${t("Fetching")}…` : t("Fetch models")}
+                </Button>
+                {models.length > 0 && (
+                  <ModelSelect
+                    aria-label={t("Available models")}
+                    value={models.includes(model) ? model : ""}
+                    onChange={(ev) => setModel(ev.target.value)}
+                  >
+                    <option value="" disabled>
+                      {t("Choose from {{ count }} models", {
+                        count: models.length,
+                      })}
                     </option>
-                  ))}
-                </ModelSelect>
-              )}
-            </ModelRow>
+                    {models.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </ModelSelect>
+                )}
+              </ModelRow>
+            </div>
           </SettingRow>
           <SettingRow
             name="apiKey"
@@ -259,7 +261,7 @@ function AISettings() {
 }
 
 const ModelRow = styled(Flex)`
-  margin: -8px 0 16px;
+  margin: 8px 0 16px;
 `;
 
 const ModelSelect = styled.select`

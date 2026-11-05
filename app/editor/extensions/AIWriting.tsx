@@ -1,9 +1,11 @@
+import i18n from "i18next";
 import { action, observable } from "mobx";
 import { Slice } from "prosemirror-model";
 import { Command, EditorState } from "prosemirror-state";
 import * as React from "react";
 import Extension, { WidgetProps } from "@shared/editor/lib/Extension";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
+import { AI_ERROR_MARK, AI_KEEP_ALIVE } from "@shared/utils/ai";
 import AIConfig from "~/utils/AIConfig";
 import AIWritingPanel from "../components/AIWritingPanel";
 
@@ -156,19 +158,24 @@ export default class AIWritingExtension extends Extension {
 
       if (!response.ok || !response.body) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.message || response.statusText);
+        throw new Error(i18n.t(body.message || response.statusText));
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let raw = "";
       for (;;) {
         const { done, value } = await reader.read();
         if (done) {
           break;
         }
-        this.setState({
-          output: this.output + decoder.decode(value, { stream: true }),
-        });
+        raw += decoder.decode(value, { stream: true });
+        const [text] = raw.split(AI_ERROR_MARK);
+        this.setState({ output: text.split(AI_KEEP_ALIVE).join("") });
+      }
+      const [, failure] = raw.split(AI_ERROR_MARK);
+      if (failure !== undefined) {
+        throw new Error(i18n.t(failure));
       }
       if (!this.output.trim()) {
         throw new Error(this.options.dictionary.aiNoContent);
