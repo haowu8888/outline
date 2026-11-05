@@ -1274,5 +1274,16 @@
   "{{ count }} voter": "{{ count }} 人参与",
   "{{ count }} voter_plural": "{{ count }} 人参与",
   "The text is encrypted in your browser, the password is not stored and can not be recovered.": "内容在浏览器中加密，密码不会被保存，忘记后无法找回。",
-  "Encrypted text requires HTTPS": "加密文本需要通过 HTTPS 访问"
+  "Encrypted text requires HTTPS": "加密文本需要通过 HTTPS 访问",
+  "For example https://api.openai.com/v1, /v1 is added when the URL has no path": "例如 https://api.openai.com/v1，地址不带路径时会自动补上 /v1",
+  "Found {{ count }} models": "获取到 {{ count }} 个模型",
+  "Found {{ count }} models_plural": "获取到 {{ count }} 个模型",
+  "The API returned no models": "接口没有返回模型列表",
+  "Fetching": "获取中",
+  "Fetch models": "获取模型",
+  "Available models": "可用模型",
+  "Choose from {{ count }} models": "从 {{ count }} 个模型中选择",
+  "Choose from {{ count }} models_plural": "从 {{ count }} 个模型中选择",
+  "AI returned no content": "AI 没有返回内容",
+  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "接口返回的不是 OpenAI 兼容格式，请检查地址是否包含 /v1 等版本路径"
 }

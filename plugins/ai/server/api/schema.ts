@@ -47,3 +47,12 @@ export const AISettingsTestSchema = BaseSchema.extend({
 });
 
 export type AISettingsTestReq = z.infer<typeof AISettingsTestSchema>;
+
+export const AISettingsModelsSchema = BaseSchema.extend({
+  body: z.object({
+    baseUrl: z.string().url().optional(),
+    apiKey: z.string().max(1000).optional(),
+  }),
+});
+
+export type AISettingsModelsReq = z.infer<typeof AISettingsModelsSchema>;

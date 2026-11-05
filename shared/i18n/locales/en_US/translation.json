@@ -1286,5 +1286,16 @@
   "{{ count }} voter": "{{ count }} voter",
   "{{ count }} voter_plural": "{{ count }} voters",
   "The text is encrypted in your browser, the password is not stored and can not be recovered.": "The text is encrypted in your browser, the password is not stored and can not be recovered.",
-  "Encrypted text requires HTTPS": "Encrypted text requires HTTPS"
+  "Encrypted text requires HTTPS": "Encrypted text requires HTTPS",
+  "For example https://api.openai.com/v1, /v1 is added when the URL has no path": "For example https://api.openai.com/v1, /v1 is added when the URL has no path",
+  "Found {{ count }} models": "Found {{ count }} model",
+  "Found {{ count }} models_plural": "Found {{ count }} models",
+  "The API returned no models": "The API returned no models",
+  "Fetching": "Fetching",
+  "Fetch models": "Fetch models",
+  "Available models": "Available models",
+  "Choose from {{ count }} models": "Choose from {{ count }} model",
+  "Choose from {{ count }} models_plural": "Choose from {{ count }} models",
+  "AI returned no content": "AI returned no content",
+  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1"
 }

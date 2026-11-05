@@ -3,6 +3,8 @@ import { SparklesIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import styled from "styled-components";
+import { s } from "@shared/styles";
 import SettingRow from "~/scenes/Settings/components/SettingRow";
 import Button from "~/components/Button";
 import Flex from "~/components/Flex";
@@ -37,6 +39,8 @@ function AISettings() {
   const [apiKey, setApiKey] = React.useState("");
   const [saving, setSaving] = React.useState(false);
   const [testing, setTesting] = React.useState(false);
+  const [fetching, setFetching] = React.useState(false);
+  const [models, setModels] = React.useState<string[]>([]);
 
   const apply = React.useCallback((data: Settings) => {
     setSettings(data);
@@ -105,6 +109,27 @@ function AISettings() {
     }
   }, [baseUrl, model, apiKey, t]);
 
+  const handleFetchModels = React.useCallback(async () => {
+    setFetching(true);
+    try {
+      const res = await client.post("/ai.settings.models", {
+        baseUrl: baseUrl.trim() || undefined,
+        apiKey: apiKey.trim() || undefined,
+      });
+      const list: string[] = res.data.models;
+      setModels(list);
+      if (list.length) {
+        toast.success(t("Found {{ count }} models", { count: list.length }));
+      } else {
+        toast.error(t("The API returned no models"));
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setFetching(false);
+    }
+  }, [baseUrl, apiKey, t]);
+
   return (
     <Scene title={t("AI writing")} icon={<SparklesIcon />}>
       <Heading>{t("AI writing")}</Heading>
@@ -134,7 +159,7 @@ function AISettings() {
             name="baseUrl"
             label={t("API base URL")}
             description={t(
-              "Including the version path, for example https://api.openai.com/v1"
+              "For example https://api.openai.com/v1, /v1 is added when the URL has no path"
             )}
           >
             <Input
@@ -151,12 +176,41 @@ function AISettings() {
               model: settings.defaultModel,
             })}
           >
-            <Input
-              id="model"
-              value={model}
-              placeholder={settings.defaultModel}
-              onChange={(ev) => setModel(ev.target.value)}
-            />
+            <Flex gap={8} align="center">
+              <Input
+                id="model"
+                value={model}
+                placeholder={settings.defaultModel}
+                onChange={(ev) => setModel(ev.target.value)}
+                flex
+              />
+              <Button
+                type="button"
+                neutral
+                onClick={handleFetchModels}
+                disabled={fetching}
+              >
+                {fetching ? `${t("Fetching")}…` : t("Fetch models")}
+              </Button>
+            </Flex>
+            {models.length > 0 && (
+              <ModelSelect
+                aria-label={t("Available models")}
+                value={models.includes(model) ? model : ""}
+                onChange={(ev) => setModel(ev.target.value)}
+              >
+                <option value="" disabled>
+                  {t("Choose from {{ count }} models", {
+                    count: models.length,
+                  })}
+                </option>
+                {models.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </ModelSelect>
+            )}
           </SettingRow>
           <SettingRow
             name="apiKey"
@@ -204,5 +258,16 @@ function AISettings() {
     </Scene>
   );
 }
+
+const ModelSelect = styled.select`
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 6px 8px;
+  border: 1px solid ${s("inputBorder")};
+  border-radius: 4px;
+  background: ${s("background")};
+  color: ${s("text")};
+  font: inherit;
+`;
 
 export default observer(AISettings);

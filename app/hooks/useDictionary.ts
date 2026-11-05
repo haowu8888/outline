@@ -125,6 +125,7 @@ export default function useDictionary() {
       aiTranslateZh: t("Translate to Chinese"),
       aiFix: t("Fix spelling & grammar"),
       aiAsk: t("Ask AI"),
+      aiNoContent: t("AI returned no content"),
     }),
     [t]
   );

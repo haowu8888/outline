@@ -170,6 +170,9 @@ export default class AIWritingExtension extends Extension {
           output: this.output + decoder.decode(value, { stream: true }),
         });
       }
+      if (!this.output.trim()) {
+        throw new Error(this.options.dictionary.aiNoContent);
+      }
       this.setState({ status: "done" });
     } catch (err) {
       if (controller.signal.aborted) {

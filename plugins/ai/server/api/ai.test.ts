@@ -1,5 +1,5 @@
 import { buildMessages } from "../prompts";
-import { parseStreamChunk } from "./ai";
+import { apiUrl, parseStreamChunk } from "./ai";
 
 describe("parseStreamChunk", () => {
   it("should extract content deltas and keep the incomplete line", () => {
@@ -38,5 +38,25 @@ describe("buildMessages", () => {
       instruction: "写一首诗",
     });
     expect(messages[1].content).toContain("写一首诗");
+  });
+});
+
+describe("apiUrl", () => {
+  it("should add /v1 to a base url without a path", () => {
+    expect(apiUrl("https://freeapi.example.com/", "/chat/completions")).toEqual(
+      "https://freeapi.example.com/v1/chat/completions"
+    );
+    expect(apiUrl("http://new-api:3000", "/models")).toEqual(
+      "http://new-api:3000/v1/models"
+    );
+  });
+
+  it("should keep an explicit version path", () => {
+    expect(apiUrl("https://api.openai.com/v1/", "/models")).toEqual(
+      "https://api.openai.com/v1/models"
+    );
+    expect(
+      apiUrl("https://ark.cn-beijing.volces.com/api/v3", "/chat/completions")
+    ).toEqual("https://ark.cn-beijing.volces.com/api/v3/chat/completions");
   });
 });

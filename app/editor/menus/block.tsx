@@ -53,6 +53,26 @@ export default function blockMenuItems(
 
   return [
     {
+      name: "aiWrite",
+      title: dictionary.aiContinue,
+      icon: <SparklesIcon />,
+      keywords: "ai gpt continue write xuxie 续写 写作",
+      attrs: { action: "continue" },
+      visible: AIConfig.enabled,
+    },
+    {
+      name: "aiWrite",
+      title: dictionary.aiAsk,
+      icon: <SparklesIcon />,
+      keywords: "ai gpt ask prompt 写作 问",
+      attrs: { action: "custom" },
+      visible: AIConfig.enabled,
+    },
+    {
+      name: "separator",
+      visible: AIConfig.enabled,
+    },
+    {
       name: "heading",
       title: dictionary.h1,
       keywords: "h1 heading1 title",
@@ -293,26 +313,6 @@ export default function blockMenuItems(
       icon: <Img src="/images/mermaidjs.png" alt="Mermaid Diagram" />,
       keywords: "diagram flowchart",
       attrs: { language: "mermaidjs" },
-    },
-    {
-      name: "separator",
-      visible: AIConfig.enabled,
-    },
-    {
-      name: "aiWrite",
-      title: dictionary.aiContinue,
-      icon: <SparklesIcon />,
-      keywords: "ai gpt continue write xuxie 续写 写作",
-      attrs: { action: "continue" },
-      visible: AIConfig.enabled,
-    },
-    {
-      name: "aiWrite",
-      title: dictionary.aiAsk,
-      icon: <SparklesIcon />,
-      keywords: "ai gpt ask prompt 写作 问",
-      attrs: { action: "custom" },
-      visible: AIConfig.enabled,
     },
   ];
 }

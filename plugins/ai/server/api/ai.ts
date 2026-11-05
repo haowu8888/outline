@@ -3,7 +3,7 @@ import { PassThrough } from "stream";
 import Router from "koa-router";
 import nodeFetch from "node-fetch";
 import { UserRole } from "@shared/types";
-import { InternalError, InvalidRequestError } from "@server/errors";
+import { InvalidRequestError } from "@server/errors";
 import Logger from "@server/logging/Logger";
 import auth from "@server/middlewares/authentication";
 import { rateLimiter } from "@server/middlewares/rateLimiter";
@@ -52,6 +52,38 @@ export function parseStreamChunk(buffer: string) {
 }
 
 /**
+ * Build the URL of an endpoint of an OpenAI-compatible API. A base URL without
+ * a path gets the conventional /v1 prefix, which gateways such as new-api and
+ * one-api expect.
+ *
+ * @param baseUrl The configured base URL.
+ * @param path The endpoint path, for example "/chat/completions".
+ * @returns The full endpoint URL.
+ */
+export function apiUrl(baseUrl: string, path: string) {
+  let base = baseUrl.trim().replace(/\/+$/, "");
+  try {
+    if (new URL(base).pathname.replace(/\/+$/, "") === "") {
+      base += "/v1";
+    }
+  } catch (_err) {
+    // leave invalid urls as they are, the request reports the error
+  }
+  return `${base}${path}`;
+}
+
+/** Whether a response is an OpenAI-compatible JSON or event stream body. */
+function isApiResponse(response: {
+  headers: { get(name: string): string | null };
+}) {
+  const type = response.headers.get("content-type") ?? "";
+  return /json|event-stream/i.test(type);
+}
+
+const NOT_OPENAI_FORMAT =
+  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1";
+
+/**
  * Send a chat completion request to the configured OpenAI-compatible API.
  */
 function requestCompletion(
@@ -59,7 +91,7 @@ function requestCompletion(
   body: Record<string, unknown>,
   signal?: AbortSignal
 ) {
-  return nodeFetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+  return nodeFetch(apiUrl(config.baseUrl, "/chat/completions"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -170,15 +202,76 @@ router.post(
         max_tokens: 8,
         messages: [{ role: "user", content: "ping" }],
       });
-      const detail = response.ok ? "" : (await response.text()).slice(0, 300);
+      const text = await response.text();
+      let ok = response.ok;
+      let detail = ok ? "" : text.slice(0, 300);
+      if (ok) {
+        try {
+          ok = Array.isArray(JSON.parse(text).choices);
+        } catch (_err) {
+          ok = false;
+        }
+        if (!ok) {
+          detail = NOT_OPENAI_FORMAT;
+        }
+      }
       ctx.body = {
-        data: { ok: response.ok, status: response.status, detail },
+        data: { ok, status: response.status, detail },
       };
     } catch (err) {
       ctx.body = {
         data: { ok: false, status: 0, detail: err.message },
       };
     }
+  }
+);
+
+router.post(
+  "ai.settings.models",
+  rateLimiter(RateLimiterStrategy.TenPerMinute),
+  auth({ role: UserRole.Admin }),
+  validate(T.AISettingsModelsSchema),
+  async (ctx: APIContext<T.AISettingsModelsReq>) => {
+    const { user } = ctx.state.auth;
+    const { baseUrl, apiKey } = ctx.input.body;
+    const setting = await AISetting.findOne({
+      where: { teamId: user.teamId },
+    });
+    const base = baseUrl || setting?.baseUrl || env.AI_BASE_URL || "";
+    const key = apiKey || setting?.apiKey || env.AI_API_KEY || "";
+
+    if (!base || !key) {
+      throw InvalidRequestError("Base url and API key are required");
+    }
+
+    let response;
+    try {
+      response = await nodeFetch(apiUrl(base, "/models"), {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+    } catch (err) {
+      throw InvalidRequestError(err.message);
+    }
+    const text = await response.text();
+    if (!response.ok) {
+      throw InvalidRequestError(
+        `Failed to fetch models (${response.status}) ${text.slice(0, 200)}`
+      );
+    }
+
+    let models: string[];
+    try {
+      const data = JSON.parse(text).data;
+      models = (Array.isArray(data) ? data : [])
+        .map((item: { id?: unknown }) => item?.id)
+        .filter((id: unknown): id is string => typeof id === "string");
+    } catch (_err) {
+      throw InvalidRequestError(NOT_OPENAI_FORMAT);
+    }
+
+    ctx.body = {
+      data: { models: [...new Set(models)].sort() },
+    };
   }
 );
 
@@ -212,10 +305,37 @@ router.post(
         status: response.status,
         detail: detail.slice(0, 500),
       });
-      throw InternalError(`AI request failed with status ${response.status}`);
+      let message = detail.slice(0, 200);
+      try {
+        message = JSON.parse(detail).error?.message ?? message;
+      } catch (_err) {
+        // not json, keep the raw text
+      }
+      throw InvalidRequestError(
+        `AI request failed with status ${response.status}: ${message}`
+      );
+    }
+
+    if (!isApiResponse(response)) {
+      controller.abort();
+      throw InvalidRequestError(NOT_OPENAI_FORMAT);
     }
 
     const output = new PassThrough();
+
+    // Some providers ignore "stream" and answer with a single JSON body.
+    if (/json/i.test(response.headers.get("content-type") ?? "")) {
+      const json = await response.json().catch(() => null);
+      const content = json?.choices?.[0]?.message?.content;
+      if (typeof content !== "string") {
+        throw InvalidRequestError(json?.error?.message ?? NOT_OPENAI_FORMAT);
+      }
+      output.end(content);
+      ctx.type = "text/plain; charset=utf-8";
+      ctx.body = output;
+      return;
+    }
+
     let buffer = "";
 
     response.body.on("data", (chunk: Buffer) => {
