@@ -1297,5 +1297,6 @@
   "Choose from {{ count }} models": "Choose from {{ count }} model",
   "Choose from {{ count }} models_plural": "Choose from {{ count }} models",
   "AI returned no content": "AI returned no content",
-  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1"
+  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1",
+  "The AI API did not respond within 55 seconds, try a faster model": "The AI API did not respond within 55 seconds, try a faster model"
 }

@@ -83,6 +83,26 @@ function isApiResponse(response: {
 const NOT_OPENAI_FORMAT =
   "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1";
 
+/** How long to wait for the API to start answering. */
+const RESPONSE_TIMEOUT_MS = 55 * 1000;
+
+/** How long an AI request may keep the connection open, the server default is much shorter. */
+const SOCKET_TIMEOUT_MS = 5 * 60 * 1000;
+
+const SLOW_API =
+  "The AI API did not respond within 55 seconds, try a faster model";
+
+/**
+ * Abort the request when the API has not answered in time.
+ *
+ * @param controller The controller of the upstream request.
+ * @returns A function that stops the timer once the API answered.
+ */
+function abortWhenSlow(controller: AbortController) {
+  const timer = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS);
+  return () => clearTimeout(timer);
+}
+
 /**
  * Send a chat completion request to the configured OpenAI-compatible API.
  */
@@ -197,30 +217,52 @@ router.post(
       throw InvalidRequestError("Base url and API key are required");
     }
 
+    // Slow models can take longer than the server's default request timeout.
+    ctx.req.setTimeout(SOCKET_TIMEOUT_MS);
+    const controller = new AbortController();
+    const answered = abortWhenSlow(controller);
+
     try {
-      const response = await requestCompletion(config, {
-        max_tokens: 8,
-        messages: [{ role: "user", content: "ping" }],
-      });
-      const text = await response.text();
+      // Streaming answers as soon as the model starts, without waiting for it to finish.
+      const response = await requestCompletion(
+        config,
+        {
+          stream: true,
+          max_tokens: 8,
+          messages: [{ role: "user", content: "ping" }],
+        },
+        controller.signal
+      );
+      answered();
+      const type = response.headers.get("content-type") ?? "";
       let ok = response.ok;
-      let detail = ok ? "" : text.slice(0, 300);
-      if (ok) {
+      let detail = "";
+      if (!ok) {
+        detail = (await response.text()).slice(0, 300);
+      } else if (/event-stream/i.test(type)) {
+        controller.abort();
+      } else {
+        const text = await response.text();
         try {
           ok = Array.isArray(JSON.parse(text).choices);
         } catch (_err) {
           ok = false;
         }
-        if (!ok) {
-          detail = NOT_OPENAI_FORMAT;
-        }
+      }
+      if (response.ok && !ok) {
+        detail = NOT_OPENAI_FORMAT;
       }
       ctx.body = {
         data: { ok, status: response.status, detail },
       };
     } catch (err) {
+      answered();
       ctx.body = {
-        data: { ok: false, status: 0, detail: err.message },
+        data: {
+          ok: false,
+          status: 0,
+          detail: controller.signal.aborted ? SLOW_API : err.message,
+        },
       };
     }
   }
@@ -289,15 +331,26 @@ router.post(
       throw InvalidRequestError("AI writing is not configured");
     }
 
+    ctx.req.setTimeout(SOCKET_TIMEOUT_MS);
     const controller = new AbortController();
-    const response = await requestCompletion(
-      config,
-      {
-        stream: true,
-        messages: buildMessages({ action, text, instruction, title }),
-      },
-      controller.signal
-    );
+    const answered = abortWhenSlow(controller);
+    let response;
+    try {
+      response = await requestCompletion(
+        config,
+        {
+          stream: true,
+          messages: buildMessages({ action, text, instruction, title }),
+        },
+        controller.signal
+      );
+    } catch (err) {
+      throw InvalidRequestError(
+        controller.signal.aborted ? SLOW_API : err.message
+      );
+    } finally {
+      answered();
+    }
 
     if (!response.ok || !response.body) {
       const detail = await response.text().catch(() => "");

@@ -1285,5 +1285,6 @@
   "Choose from {{ count }} models": "从 {{ count }} 个模型中选择",
   "Choose from {{ count }} models_plural": "从 {{ count }} 个模型中选择",
   "AI returned no content": "AI 没有返回内容",
-  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "接口返回的不是 OpenAI 兼容格式，请检查地址是否包含 /v1 等版本路径"
+  "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "接口返回的不是 OpenAI 兼容格式，请检查地址是否包含 /v1 等版本路径",
+  "The AI API did not respond within 55 seconds, try a faster model": "AI 接口 55 秒内没有响应，请换一个更快的模型"
 }
