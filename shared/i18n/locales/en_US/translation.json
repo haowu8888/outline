@@ -1298,5 +1298,14 @@
   "Choose from {{ count }} models_plural": "Choose from {{ count }} models",
   "AI returned no content": "AI returned no content",
   "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1",
-  "The AI API did not respond within 5 minutes, try a faster model": "The AI API did not respond within 5 minutes, try a faster model"
+  "The AI API did not respond within 5 minutes, try a faster model": "The AI API did not respond within 5 minutes, try a faster model",
+  "The email or password is incorrect.": "The email or password is incorrect.",
+  "The passwords do not match": "The passwords do not match",
+  "Password saved": "Password saved",
+  "Sign in with your email address {{ email }} and this password.": "Sign in with your email address {{ email }} and this password.",
+  "Your account has no email address, password sign-in needs one.": "Your account has no email address, password sign-in needs one.",
+  "Current password": "Current password",
+  "New password": "New password",
+  "At least {{ count }} characters": "At least {{ count }} characters",
+  "Confirm new password": "Confirm new password"
 }

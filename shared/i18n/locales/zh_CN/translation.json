@@ -1286,5 +1286,14 @@
   "Choose from {{ count }} models_plural": "从 {{ count }} 个模型中选择",
   "AI returned no content": "AI 没有返回内容",
   "The API did not return an OpenAI-compatible response, check that the base URL includes the version path such as /v1": "接口返回的不是 OpenAI 兼容格式，请检查地址是否包含 /v1 等版本路径",
-  "The AI API did not respond within 5 minutes, try a faster model": "AI 接口 5 分钟内没有响应，请换一个更快的模型"
+  "The AI API did not respond within 5 minutes, try a faster model": "AI 接口 5 分钟内没有响应，请换一个更快的模型",
+  "The email or password is incorrect.": "邮箱或密码错误。",
+  "The passwords do not match": "两次输入的密码不一致",
+  "Password saved": "密码已保存",
+  "Sign in with your email address {{ email }} and this password.": "使用邮箱 {{ email }} 和这个密码登录。",
+  "Your account has no email address, password sign-in needs one.": "你的账号没有邮箱，密码登录需要邮箱。",
+  "Current password": "当前密码",
+  "New password": "新密码",
+  "At least {{ count }} characters": "至少 {{ count }} 个字符",
+  "Confirm new password": "确认新密码"
 }

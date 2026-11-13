@@ -165,6 +165,10 @@ class User extends ParanoidModel<
   @Column
   lastSigninEmailSentAt: Date | null;
 
+  /** scrypt hash of the user's sign-in password, see plugins/password. */
+  @Column
+  passwordHash: string | null;
+
   @IsDate
   @Column
   suspendedAt: Date | null;

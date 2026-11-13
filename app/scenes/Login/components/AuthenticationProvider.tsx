@@ -57,6 +57,44 @@ function AuthenticationProvider(props: Props) {
 
   const href = getRedirectUrl(authUrl);
 
+  if (id === "password") {
+    if (isCreate) {
+      return null;
+    }
+
+    // A native form post, the server sets the session cookie and redirects.
+    return (
+      <Wrapper>
+        <PasswordForm method="POST" action="/auth/password">
+          <input
+            type="hidden"
+            name="client"
+            value={Desktop.isElectron() ? "desktop" : "web"}
+          />
+          <InputLarge
+            type="email"
+            name="email"
+            autoComplete="username"
+            placeholder={t("Email")}
+            required
+            short
+          />
+          <InputLarge
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            placeholder={t("Password")}
+            required
+            short
+          />
+          <ButtonLarge type="submit" fullwidth {...rest}>
+            {t("Sign In")} →
+          </ButtonLarge>
+        </PasswordForm>
+      </Wrapper>
+    );
+  }
+
   if (id === "email") {
     if (isCreate) {
       return null;
@@ -114,6 +152,17 @@ const Form = styled.form`
   width: 100%;
   display: flex;
   justify-content: space-between;
+`;
+
+const PasswordForm = styled.form`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  > * {
+    margin-right: 0;
+  }
 `;
 
 export default AuthenticationProvider;

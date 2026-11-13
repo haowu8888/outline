@@ -52,6 +52,8 @@ function Message({ notice }: { notice: string }) {
           We could not read the user info supplied by your identity provider.
         </Trans>
       );
+    case "password-invalid":
+      return <Trans>The email or password is incorrect.</Trans>;
     case "email-auth-required":
       return (
         <Trans>
