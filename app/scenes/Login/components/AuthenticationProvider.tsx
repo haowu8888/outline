@@ -77,7 +77,6 @@ function AuthenticationProvider(props: Props) {
             autoComplete="username"
             placeholder={t("Email")}
             required
-            short
           />
           <InputLarge
             type="password"
@@ -85,7 +84,6 @@ function AuthenticationProvider(props: Props) {
             autoComplete="current-password"
             placeholder={t("Password")}
             required
-            short
           />
           <ButtonLarge type="submit" fullwidth {...rest}>
             {t("Sign In")} →
@@ -158,9 +156,9 @@ const PasswordForm = styled.form`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 
-  > * {
+  && > * {
+    width: 100%;
     margin-right: 0;
   }
 `;
