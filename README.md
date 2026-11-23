@@ -6,7 +6,7 @@
   </picture>
 </p>
 <p align="center">
-  <i>A fast, collaborative, knowledge base for your team built using React and Node.js.<br/>Try out Outline using our hosted version at <a href="https://www.getoutline.com">www.getoutline.com</a>.</i>
+  <i>A fast, collaborative, knowledge base for your team built using React and Node.js.<br/>Try the upstream hosted version at <a href="https://www.getoutline.com">www.getoutline.com</a>.</i>
   <br/>
   <img width="1640" alt="screenshot" src="https://user-images.githubusercontent.com/380914/110356468-26374600-7fef-11eb-9f6a-f2cc2c8c6590.png">
 </p>
@@ -16,13 +16,18 @@
   <a href="https://translate.getoutline.com/project/outline" alt="Localized"><img src="https://badges.crowdin.net/outline/localized.svg"></a>
 </p>
 
-This is the source code that runs [**Outline**](https://www.getoutline.com) and all the associated services. If you want to use Outline then you don't need to run this code, A hosted version of the app is offered at [getoutline.com](https://www.getoutline.com). You can also find documentation on using Outline in [our guide](https://docs.getoutline.com/s/guide).
+# Outline 团队知识库
 
-If you'd like to run your own copy of Outline or contribute to development then this is the place for you.
+这是 [Outline](https://github.com/outline/outline) 的派生仓库。Outline 支持团队多人实时协作编辑，可用集合和文档树整理会议记录、项目手册和内部 Wiki，并通过全文搜索、评论、修订历史和共享链接来协作。
+
+- `main` 基于上游 Outline，适合查阅原有功能和部署文档。
+- [`zhiye`](https://github.com/haowu8888/outline/tree/zhiye) 在 Outline 0.83.0 基础上加入兼容 OpenAI API 的 AI 写作、Excalidraw 白板、分栏与互动块、中文平台视频嵌入、分享链接密码和有效期、邮箱密码登录。部署此版本请使用该分支的源码与 `Dockerfile.flow`。
+
+Compose 文件可启动 PostgreSQL 和 Redis。本地开发使用 `package.json` 指定的 Node.js 和 Yarn 版本，依赖启动和开发命令见 [Makefile](Makefile)。自托管时，从 [`.env.sample`](.env.sample) 配置站点 `URL`、数据库和 Redis 连接、服务密钥、文件存储以及可用的登录方式。生产配置和容器镜像见下方安装章节。上游托管服务的使用说明见 [Outline 用户指南](https://docs.getoutline.com/s/guide)。
 
 # Installation
 
-Please see the [documentation](https://docs.getoutline.com/s/hosting/) for running your own copy of Outline in a production configuration.
+Please see the [upstream documentation](https://docs.getoutline.com/s/hosting/) for running your own copy of Outline in a production configuration.
 
 Available container images:
 * [![Container Image Release](https://img.shields.io/docker/v/outlinewiki/outline?sort=semver&label=Latest%20release)](https://hub.docker.com/r/outlinewiki/outline)
