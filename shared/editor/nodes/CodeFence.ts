@@ -77,6 +77,7 @@ import {
 } from "../commands/codeFence";
 import { selectAll } from "../commands/selectAll";
 import toggleBlockType from "../commands/toggleBlockType";
+import CodeCollapse, { toggleCodeFullscreen } from "../extensions/CodeCollapse";
 import Mermaid from "../extensions/Mermaid";
 import Prism from "../extensions/Prism";
 import { getRecentCodeLanguage, setRecentCodeLanguage } from "../lib/code";
@@ -219,6 +220,7 @@ export default class CodeFence extends Node {
           ...attrs,
         });
       },
+      toggleCodeFullscreen: (): Command => toggleCodeFullscreen,
       copyToClipboard: (): Command => (state, dispatch) => {
         const codeBlock = findParentNode(isCode)(state.selection);
 
@@ -293,6 +295,10 @@ export default class CodeFence extends Node {
       Mermaid({
         name: this.name,
         isDark: this.editor.props.theme.isDark,
+      }),
+      CodeCollapse({
+        name: this.name,
+        dictionary: this.options.dictionary,
       }),
       new Plugin({
         key: new PluginKey("triple-click"),

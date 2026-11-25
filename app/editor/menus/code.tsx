@@ -47,6 +47,11 @@ export default function codeMenuItems(
       tooltip: dictionary.copy,
     },
     {
+      name: "toggleCodeFullscreen",
+      icon: <FullscreenIcon />,
+      tooltip: dictionary.fullscreen,
+    },
+    {
       name: "separator",
       visible: !readOnly,
     },
@@ -59,6 +64,12 @@ export default function codeMenuItems(
     },
   ];
 }
+
+const FullscreenIcon = () => (
+  <svg width={24} height={24} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 6h4v2H8v2H6V6zm8 0h4v4h-2V8h-2V6zM6 14h2v2h2v2H6v-4zm10 0h2v4h-4v-2h2v-2z" />
+  </svg>
+);
 
 const langToMenuItem = ({
   node,
