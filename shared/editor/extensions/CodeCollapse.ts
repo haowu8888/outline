@@ -18,9 +18,18 @@ type CodeCollapseState = {
 
 type CodeCollapseMeta = { toggle: number } | { fullscreen: number | null };
 
-export const codeCollapseKey = new PluginKey<CodeCollapseState>(
-  "code-collapse"
-);
+const pluginKeys: Record<string, PluginKey<CodeCollapseState>> = {};
+
+/**
+ * Returns the plugin key for the given code node type, code_fence and
+ * code_block each get their own plugin instance.
+ */
+function codeCollapseKey(name: string) {
+  pluginKeys[name] ??= new PluginKey<CodeCollapseState>(
+    `code-collapse-${name}`
+  );
+  return pluginKeys[name];
+}
 
 /**
  * Returns a command that toggles full screen view of the code block at the
@@ -34,9 +43,10 @@ export function toggleCodeFullscreen(
   if (!codeBlock) {
     return false;
   }
-  const current = codeCollapseKey.getState(state)?.fullscreen;
+  const key = codeCollapseKey(codeBlock.node.type.name);
+  const current = key.getState(state)?.fullscreen;
   dispatch?.(
-    state.tr.setMeta(codeCollapseKey, {
+    state.tr.setMeta(key, {
       fullscreen: current === codeBlock.pos ? null : codeBlock.pos,
     })
   );
@@ -91,6 +101,7 @@ function buildDecorations(
             collapsed,
             isFullscreen,
             dictionary,
+            key: codeCollapseKey(name),
           }),
         {
           side: -1,
@@ -115,9 +126,10 @@ function renderBar(
     collapsed: boolean;
     isFullscreen: boolean;
     dictionary: Dictionary;
+    key: PluginKey<CodeCollapseState>;
   }
 ) {
-  const { lines, long, collapsed, isFullscreen, dictionary } = options;
+  const { lines, long, collapsed, isFullscreen, dictionary, key } = options;
   const bar = document.createElement("div");
   bar.className = [
     "code-block-bar",
@@ -147,7 +159,7 @@ function renderBar(
       event.preventDefault();
       const pos = blockPos();
       if (pos !== undefined) {
-        view.dispatch(view.state.tr.setMeta(codeCollapseKey, meta(pos)));
+        view.dispatch(view.state.tr.setMeta(key, meta(pos)));
       }
     });
     bar.appendChild(button);
@@ -181,8 +193,11 @@ export default function CodeCollapse({
   name: string;
   dictionary: Dictionary;
 }) {
+  const key = codeCollapseKey(name);
+  const isOwnCode = (node: Node) => node.type.name === name;
+
   return new Plugin<CodeCollapseState>({
-    key: codeCollapseKey,
+    key,
     state: {
       init: (_, { doc }) => ({
         expanded: [],
@@ -190,9 +205,7 @@ export default function CodeCollapse({
         decorations: buildDecorations(doc, name, [], null, dictionary),
       }),
       apply: (tr, value, oldState, newState) => {
-        const meta = tr.getMeta(codeCollapseKey) as
-          | CodeCollapseMeta
-          | undefined;
+        const meta = tr.getMeta(key) as CodeCollapseMeta | undefined;
         let expanded = value.expanded
           .map((pos) => tr.mapping.mapResult(pos))
           .filter((result) => !result.deleted)
@@ -206,9 +219,9 @@ export default function CodeCollapse({
 
         // Moving the cursor into a collapsed block expands it so the text being
         // edited stays visible.
-        const block = findParentNode(isCode)(newState.selection);
+        const block = findParentNode(isOwnCode)(newState.selection);
         if (block && !expanded.includes(block.pos)) {
-          const previous = findParentNode(isCode)(oldState.selection);
+          const previous = findParentNode(isOwnCode)(oldState.selection);
           if (!previous || tr.mapping.map(previous.pos) !== block.pos) {
             expanded = [...expanded, block.pos];
           }
@@ -242,13 +255,11 @@ export default function CodeCollapse({
       const onKeyDown = (event: KeyboardEvent) => {
         if (
           event.key === "Escape" &&
-          codeCollapseKey.getState(view.state)?.fullscreen !== null
+          key.getState(view.state)?.fullscreen !== null
         ) {
           event.preventDefault();
           event.stopPropagation();
-          view.dispatch(
-            view.state.tr.setMeta(codeCollapseKey, { fullscreen: null })
-          );
+          view.dispatch(view.state.tr.setMeta(key, { fullscreen: null }));
         }
       };
       const setScrollLock = (lock: boolean) => {
@@ -259,8 +270,7 @@ export default function CodeCollapse({
 
       return {
         update: () => {
-          const next =
-            codeCollapseKey.getState(view.state)?.fullscreen !== null;
+          const next = key.getState(view.state)?.fullscreen !== null;
           if (next !== locked) {
             locked = next;
             setScrollLock(locked);
@@ -276,7 +286,7 @@ export default function CodeCollapse({
     },
     props: {
       decorations(state) {
-        return codeCollapseKey.getState(state)?.decorations;
+        return key.getState(state)?.decorations;
       },
     },
   });
