@@ -90,10 +90,11 @@ function buildDecorations(
       Decoration.node(pos, pos + node.nodeSize, { class: classes })
     );
 
-    const end = pos + node.nodeSize;
+    // The bar sits above the block so the buttons are reachable without
+    // scrolling to the end of long code.
     decorations.push(
       Decoration.widget(
-        end,
+        pos,
         (view: EditorView, getPos: () => number | undefined) =>
           renderBar(view, getPos, {
             lines,
@@ -143,8 +144,7 @@ function renderBar(
     if (pos === undefined) {
       return undefined;
     }
-    const node = view.state.doc.resolve(pos).nodeBefore;
-    return node ? pos - node.nodeSize : undefined;
+    return view.state.doc.nodeAt(pos) ? pos : undefined;
   };
 
   const addButton = (

@@ -1458,6 +1458,7 @@ mark {
 .code-block.code-collapsed {
   max-height: 400px;
   overflow: hidden;
+  mask-image: linear-gradient(#000 75%, transparent);
 }
 
 .code-block-bar {
@@ -1465,7 +1466,7 @@ mark {
   justify-content: flex-end;
   gap: 4px;
   position: relative;
-  margin: -0.25em 0 0.5em;
+  margin: 0.5em 0 -0.5em;
   user-select: none;
 
   button {
@@ -1485,38 +1486,21 @@ mark {
     }
   }
 
-  &.collapsed {
-    justify-content: center;
-    margin-top: -64px;
-    padding: 32px 0 6px;
-    background: linear-gradient(
-      ${transparentize(1, props.theme.codeBackground)},
-      ${props.theme.codeBackground} 60%
-    );
-    border: 1px solid ${props.theme.codeBorder};
-    border-top: 0;
-    border-radius: 0 0 4px 4px;
-
-    button {
-      color: ${props.theme.textSecondary};
-    }
+  &.collapsed button:first-child {
+    color: ${props.theme.accent};
   }
 
   &.fullscreen {
     position: fixed;
-    top: 12px;
-    right: 5vw;
+    top: calc(52px + 8px);
+    right: calc(5vw + 8px);
     margin: 0;
     z-index: 921;
 
     button {
-      color: #fff;
-      background: rgba(0, 0, 0, 0.4);
-
-      &:hover {
-        color: #fff;
-        background: rgba(0, 0, 0, 0.6);
-      }
+      color: ${props.theme.text};
+      background: ${props.theme.codeBorder};
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     }
   }
 }
@@ -1545,6 +1529,7 @@ mark {
 @media print {
   .code-block.code-collapsed {
     max-height: none;
+    mask-image: none;
   }
 
   .code-block-bar {
