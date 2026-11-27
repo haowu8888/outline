@@ -18,12 +18,25 @@
 
 # Outline 团队知识库
 
-这是 [Outline](https://github.com/outline/outline) 的派生仓库。Outline 支持团队多人实时协作编辑，可用集合和文档树整理会议记录、项目手册和内部 Wiki，并通过全文搜索、评论、修订历史和共享链接来协作。
+这是 [Outline](https://github.com/outline/outline) 的派生仓库。团队可用集合和文档树组织项目手册、会议记录和内部 Wiki，通过实时编辑、评论、修订历史、全文搜索和共享链接协作。
 
-- `main` 基于上游 Outline，适合查阅原有功能和部署文档。
-- [`zhiye`](https://github.com/haowu8888/outline/tree/zhiye) 在 Outline 0.83.0 基础上加入兼容 OpenAI API 的 AI 写作、Excalidraw 白板、分栏与互动块、中文平台视频嵌入、分享链接密码和有效期、邮箱密码登录。部署此版本请使用该分支的源码与 `Dockerfile.flow`。
+## 选择分支
 
-Compose 文件可启动 PostgreSQL 和 Redis。本地开发使用 `package.json` 指定的 Node.js 和 Yarn 版本，依赖启动和开发命令见 [Makefile](Makefile)。自托管时，从 [`.env.sample`](.env.sample) 配置站点 `URL`、数据库和 Redis 连接、服务密钥、文件存储以及可用的登录方式。生产配置和容器镜像见下方安装章节。上游托管服务的使用说明见 [Outline 用户指南](https://docs.getoutline.com/s/guide)。
+| 分支 | 内容 | 从这里开始 |
+| --- | --- | --- |
+| `main` | 跟随上游 Outline，保留团队知识库与自托管能力。 | [托管与安装文档](https://docs.getoutline.com/s/hosting/) |
+| [`zhiye`](https://github.com/haowu8888/outline/tree/zhiye) | 基于 Outline 0.83.0，增加 AI 写作、白板、互动块和分享控制。 | [构建文件](https://github.com/haowu8888/outline/blob/zhiye/Dockerfile.flow) · [环境变量示例](https://github.com/haowu8888/outline/blob/zhiye/.env.sample) |
+
+### `zhiye` 分支功能
+
+- **写作与编辑**。在工作区配置 OpenAI 兼容接口后，从编辑器使用 AI 写作。文档支持分栏、Excalidraw 白板、可折叠代码块，以及投票、看板、日历等互动块。
+- **媒体与分享**。可嵌入中文平台的视频，为公开分享链接设置密码和有效期，并使用邮箱密码登录。
+
+## 自托管与本地开发
+
+选择分支后，使用该分支的配置和构建文件。自托管需要设置站点 `URL`、PostgreSQL、Redis、服务密钥、文件存储和登录方式。默认分支的配置项见 [`.env.sample`](.env.sample)。
+
+本地开发可用 [Docker Compose](docker-compose.yml) 启动 PostgreSQL 和 Redis，再按 [`.nvmrc`](.nvmrc) 和 [`package.json`](package.json) 准备 Node.js 和 Yarn。依赖安装与开发命令见 [Makefile](Makefile)。文档编辑和协作操作见 [Outline 用户指南](https://docs.getoutline.com/s/guide)。
 
 # Installation
 
